@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viaje a México 2025 - Familia Molina Velásquez</title>
+
+    <!-- Tailwind CSS CDN para estilos rápidos y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Leaflet CSS para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        xintegrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""/>
+
+    <!-- React y ReactDOM para el framework de la aplicación -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <!-- Babel para transformar JSX directamente en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Fuentes personalizadas */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:wght@400;700&display=swap');
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0; /* Asegura que no haya márgenes predeterminados del body */
+        }
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Estilos de scrollbar personalizados */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F8E0F0; /* Fondo del track de la barra de desplazamiento */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D32F2F; /* Color del "pulgar" de la barra de desplazamiento */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C62828; /* Color al pasar el ratón */
+        }
+        /* Estilos para el mapa de Leaflet */
+        #mapid {
+            height: 500px; /* Altura predeterminada del mapa */
+            width: 100%; /* Ancho completo */
+        }
+        /* Asegura que los íconos de Leaflet se carguen correctamente */
+        .leaflet-default-icon-path {
+            background-image: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png') !important;
+        }
+        .leaflet-pane {
+            z-index: 1; /* Asegura que el panel del mapa esté por debajo de otros elementos */
+        }
+        .leaflet-top, .leaflet-bottom {
+            z-index: 999; /* Asegura que los controles del mapa estén por encima */
+        }
+        .custom-colored-marker {
+            background-color: transparent !important; /* El fondo lo define el div interno */
+            border-radius: 50%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Datos de los lugares y atracciones
+        const placesData = [
+            {
+                id: 'aicm',
+                name: 'Aeropuerto Internacional de la Ciudad de México (AICM)',
+                address: 'Av. Capitán Carlos León S/N, Peñón de los Baños, Venustiano Carranza, 15620 Ciudad de México, CDMX',
+                type: 'Transporte',
+                description: 'Principal aeropuerto de México y el más grande de América Latina.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Punto de llegada y salida internacional.',
+                image: 'https://images.telediario.mx/rFfwXirQ7kjqbuKqVwVtkVJO_E0=/948x533/uploads/media/2022/07/29/terminal-del-aicm-rene-soto.jpg',
+                map_query: 'Aeropuerto Internacional de la Ciudad de México',
+                lat: 19.4362,
+                lng: -99.0721
+            },
+            {
+                id: 'taqueria_cdmx',
+                name: 'Taquería Local',
+                address: 'Varias ubicaciones en CDMX',
+                type: 'Restaurante',
+                description: 'Experiencia culinaria auténtica con una variedad de tacos tradicionales mexicanos.',
+                price_mxn: 150,
+                price_cop: 33000,
+                importance: 'La mejor manera de probar la auténtica gastronomía mexicana sin gastar mucho.',
+                image: 'https://media.istockphoto.com/id/1209902771/es/foto/soporte-de-taco.jpg?s=612x612&w=0&k=20&c=0GOBFftFzJw6FYPnUfdfCBBMPOP_1lwv6Sy8sJPA3gM=',
+                map_query: 'Taquería Ciudad de México',
+                lat: 19.418,
+                lng: -99.165,
+                recommended_restaurants: [
+                    {
+                        rec_id: 'el_borrego_viudo',
+                        name: 'El Borrego Viudo',
+                        address: 'Av. Revolución 241, Tacubaya, Miguel Hidalgo, CDMX',
+                        description: 'Famosa por sus tacos al pastor y su servicio rápido. Abre hasta tarde.',
+                        price_mxn: 175,
+                        price_cop: 38500,
+                        map_query: 'El Borrego Viudo, Ciudad de México',
+                        image: 'https://cloudfront-us-east-1.images.arcpublishing.com/infobae/UDJCDX6OQ5ABBIMGZSIW6DK4KM.jpg',
+                    },
+                    {
+                        rec_id: 'tacos_orinoco',
+                        name: 'Tacos Orinoco',
+                        address: 'Av. Álvaro Obregón 179, Roma Nte., Cuauhtémoc, CDMX',
+                        description: 'Estilo de tacos del norte de México. Sus tacos de chicharrón son un must.',
+                        price_mxn: 140,
+                        price_cop: 30800,
+                        map_query: 'Tacos Orinoco Roma Norte, Ciudad de México',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1c/2f/4e/23/photo0jpg.jpg?w=900&h=500&s=1',
+                    },
+                    {
+                        rec_id: 'el_vilsito',
+                        name: 'El Vilsito',
+                        address: 'Av. Universidad 248, Narvarte Poniente, Benito Juárez, CDMX',
+                        description: 'Una taquería que se transforma de taller mecánico por el día. Famosa por su pastor.',
+                        price_mxn: 160,
+                        price_cop: 35200,
+                        map_query: 'El Vilsito, Ciudad de México',
+                        image: 'https://vitepresenta.com/wp-content/uploads/2024/08/IMG_1425-1024x768.jpg',
+                    },
+                    {
+                        rec_id: 'los_cocuyos',
+                        name: 'Los Cocuyos',
+                        address: 'Calle de Bolívar 57, Centro Histórico de la Cdad. de México, CDMX',
+                        description: 'Pequeño puesto legendario en el Centro Histórico, famoso por sus tacos de cabeza y suadero.',
+                        price_mxn: 100,
+                        price_cop: 22000,
+                        map_query: 'Tacos Los Cocuyos, Ciudad de México',
+                        image: 'https://cdn.corner.inc/place-photo/AUGGfZlInoH4fzZMEJUDlaKcQH142bHccunUNdDwR1efA5s8ReJkQ4rXOJ9f3R2fivl46RBaLoZBUUHfr2Mkj430aI0de8ofxdfda-ZCo6oYPnmX1WIlU2kFTUPgO0DGW5A0O5imk3gutBAHgYUyK87QLZHCOvOmrXlcoLhyCnpwadtmDz2L.jpeg',
+                    }
+                ]
+            },
+            {
+                id: 'palacio_nacional',
+                name: 'Palacio Nacional',
+                address: 'Plaza de la Constitución S/N, Centro Histórico de la Cdad. de México, Centro, Cuauhtémoc, 06066 Ciudad de México, CDMX',
+                type: 'Edificio Histórico / Museo',
+                description: 'Sede del poder ejecutivo federal, famoso por los monumentales murales de Diego Rivera que narran la historia de México.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Imprescindible para entender la historia de México a través del arte de uno de sus muralistas más célebres.',
+                image: 'https://media.istockphoto.com/id/1319991463/es/foto/monumento-hist%C3%B3rico-edificio-del-palacio-nacional-en-la-plaza-de-la-constituci%C3%B3n-en-la-ciudad.jpg?s=612x612&w=0&k=20&c=Im92USaEMJcPD8_R0i9grm2r-OJQEsXlxFeqVk1tAg=',
+                map_query: 'Palacio Nacional, Ciudad de México',
+                lat: 19.4325,
+                lng: -99.1325
+            },
+            {
+                id: 'catedral_metropolitana',
+                name: 'Catedral Metropolitana de la Ciudad de México',
+                address: 'Plaza de la Constitución S/N, Centro Histórico de la Cdad. de México, Centro, Cuauhtémoc, 06000 Ciudad de México, CDMX',
+                type: 'Templo Religioso / Histórico-Arquitectónico',
+                description: 'La catedral más grande de América Latina, construida sobre el Templo Mayor mexica. Una mezcla impresionante de estilos arquitectónicos coloniales.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Un ícono del Centro Histórico, muestra la superposición de culturas y la magnitud de la arquitectura colonial.',
+                image: 'https://escapadas.mexicodesconocido.com.mx/wp-content/uploads/2021/03/Fotolia_123383867_Subscription_Monthly_XL_ok1-scaled.jpg',
+                map_query: 'Catedral Metropolitana de la Ciudad de México',
+                lat: 19.4326,
+                lng: -99.1332
+            },
+            {
+                id: 'templo_mayor',
+                name: 'Templo Mayor',
+                address: 'Seminario 8, Centro Histórico de la Cdad. de México, Centro, Cuauhtémoc, 06060 Ciudad de México, CDMX',
+                type: 'Zona Arqueológica / Museo',
+                description: 'Vestigios del principal templo de la antigua capital mexica, Tenochtitlán, y un museo que exhibe los hallazgos arqueológicos.',
+                price_mxn: 90,
+                price_cop: 20000,
+                importance: 'Ofrece una visión directa de la civilización mexica en el corazón de la CDMX.',
+                image: 'https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_1200,h_630/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/pkbmrcmptmac1ykmjrdj/Boleto%20sin%20colas%20para%20el%20Templo%20Mayor%20en%20M%C3%A9xico.jpg',
+                map_query: 'Templo Mayor, Ciudad de México',
+                lat: 19.434,
+                lng: -99.1315
+            },
+            {
+                id: 'restaurante_tradicional_cdmx',
+                name: 'Restaurante de Comida Tradicional Mexicana (Alameda Central)',
+                address: 'Cerca de la Alameda Central, CDMX',
+                type: 'Restaurante',
+                description: 'Experimenta los sabores auténticos de México en un ambiente acogedor, cerca de uno de los parques más antiguos de la ciudad.',
+                price_mxn: 225,
+                price_cop: 50000,
+                importance: 'Una opción excelente para disfrutar de platillos clásicos mexicanos en el corazón de la ciudad.',
+                image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1b/f7/20/01/tardes-de-azotea.jpg?w=900&h=500&s=1',
+                map_query: 'Restaurante tradicional cerca de Alameda Central, Ciudad de México',
+                lat: 19.4345,
+                lng: -99.143,
+                recommended_restaurants: [
+                    {
+                        rec_id: 'azul_historico',
+                        name: 'Azul Histórico',
+                        address: 'Isabel la Católica 30, Centro Histórico de la Cdad. de México, CDMX',
+                        description: 'Cocina mexicana tradicional en un hermoso patio colonial. Requiere reserva.',
+                        price_mxn: 600,
+                        price_cop: 132000,
+                        map_query: 'Azul Histórico, Ciudad de México',
+                        image: 'https://culinarybackstreets.com/wp-content/uploads/cb_mc_azulhistorico_bh_final1.jpg',
+                    },
+                    {
+                        rec_id: 'testal',
+                        name: 'Testal',
+                        address: 'Dolores 16, Centro Histórico de la Cdad. de México, CDMX',
+                        description: 'Propuesta de alta cocina mexicana con ingredientes de todo el país. Ambiente elegante.',
+                        price_mxn: 525,
+                        price_cop: 115500,
+                        map_query: 'Testal, Ciudad de México',
+                        image: 'https://i0.wp.com/foodandwineespanol.com/wp-content/uploads/2024/05/Testal-Dolores.webp?fit=1280%2C720&ssl=1',
+                    },
+                    {
+                        rec_id: 'el_cardenal_palma',
+                        name: 'El Cardenal (Palma)',
+                        address: 'Palma 23, Centro Histórico de la Cdad. de México, CDMX',
+                        description: 'Clásico de comida tradicional mexicana, famoso por sus desayunos y platillos robustos.',
+                        price_mxn: 300,
+                        price_cop: 66000,
+                        map_query: 'El Cardenal Palma, Ciudad de México',
+                        image: 'https://static.wixstatic.com/media/677e62_99cfcfbcc01d46028a52b49c090d4e32~mv2.jpg/v1/fill/w_640,h_400,al_c,lg_1,q_80,enc_auto/677e62_99cfcfbcc01d46028a52b49c090d4e32~mv2.jpg',
+                    },
+                    {
+                        rec_id: 'los_danza_chidos',
+                        name: 'Los Danzantes Coyoacán',
+                        address: 'Plaza Jardín Centenario 12, Coyoacán, CDMX',
+                        description: 'Cocina oaxaqueña contemporánea con una excelente selección de mezcales. Ambiente bohemio.',
+                        price_mxn: 450,
+                        price_cop: 99000,
+                        map_query: 'Los Danzantes Coyoacán, Ciudad de México',
+                        image: 'https://www.losdanzantescoyoacan.com/wp-content/uploads/2023/11/terraza-los-danzantes-coyoacan.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'museo_antropologia',
+                name: 'Museo Nacional de Antropología (MNA)',
+                address: 'Av. Paseo de la Reforma y Calzada Gandhi S/N, Chapultepec Polanco, Miguel Hidalgo, 11560 Ciudad de México, CDMX',
+                type: 'Museo de Historia y Arte Precolombino',
+                description: 'Uno de los museos más importantes del mundo, con vastas colecciones de arte y artefactos de las culturas prehispánicas de México. La Sala Mexica es la joya de la corona.',
+                price_mxn: 90,
+                price_cop: 20000,
+                importance: 'Esencial para comprender la riqueza y diversidad de las civilizaciones antiguas de México.',
+                image: 'https://cdn.forbes.com.mx/2019/12/74214369_2864064443628165_6236680327863992320_o-e1576810991320-640x360.jpg',
+                map_query: 'Museo Nacional de Antropología, Ciudad de México',
+                lat: 19.426,
+                lng: -99.186
+            },
+            {
+                id: 'bosque_chapultepec',
+                name: 'Bosque de Chapultepec',
+                address: 'Bosque de Chapultepec I Secc, Miguel Hidalgo, 11100 Ciudad de México, CDMX',
+                type: 'Parque Urbano / Espacio Recreativo',
+                description: 'Uno de los parques urbanos más grandes del mundo, pulmón de la CDMX, con museos, lagos y áreas verdes.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Ideal para un paseo relajante y disfrutar de la naturaleza en la ciudad.',
+                image: 'https://media.admagazine.com/photos/618a631269ed46faf86e3116/master/w_1600%2Cc_limit/78770.jpg',
+                map_query: 'Bosque de Chapultepec, Ciudad de México',
+                lat: 19.42,
+                lng: -99.19
+            },
+            {
+                id: 'castillo_chapultepec',
+                name: 'Castillo de Chapultepec (Museo Nacional de Historia)',
+                address: 'Bosque de Chapultepec I Secc, Miguel Hidalgo, 11100 Ciudad de México, CDMX',
+                type: 'Museo Histórico / Edificio Histórico',
+                description: 'Un hermoso castillo que ha sido residencia de emperadores y presidentes, con impresionantes vistas de la ciudad y exposiciones sobre la historia de México desde la Conquista.',
+                price_mxn: 85,
+                price_cop: 19000,
+                importance: 'Combina historia, arquitectura y una panorámica espectacular de la Ciudad de México.',
+                image: 'https://historiacivil.wordpress.com/wp-content/uploads/2019/12/castillo-1.jpg',
+                map_query: 'Castillo de Chapultepec, Ciudad de México',
+                lat: 19.4208,
+                lng: -99.1795
+            },
+            {
+                id: 'restaurante_condesa_roma',
+                name: 'Restaurante en la Condesa o Roma Norte',
+                address: 'Colonia Condesa o Roma Norte, CDMX',
+                type: 'Restaurante',
+                description: 'Opciones de comida internacional o mexicana contemporánea en dos de los barrios más vibrantes y con mejor ambiente de la CDMX.',
+                price_mxn: 300,
+                price_cop: 67000,
+                importance: 'Disfruta de una escena culinaria diversa y un ambiente bohemio.',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkePpiL84ga4fewPs9eafVUaZcUd1-Nn35Og&s',
+                map_query: 'Restaurante en la Condesa, Ciudad de México',
+                lat: 19.412,
+                lng: -99.171,
+                recommended_restaurants: [
+                    {
+                        rec_id: 'contramar',
+                        name: 'Contramar',
+                        address: 'Durango 200, Roma Nte., Cuauhtémoc, CDMX',
+                        description: 'Restaurante de mariscos frescos y cocina mexicana de autor. Famoso por su pescado a la talla.',
+                        price_mxn: 900,
+                        price_cop: 198000,
+                        map_query: 'Contramar, Ciudad de México',
+                        image: 'https://globalgluttons.com/wp-content/uploads/2021/11/DSC09610-1024x731.jpg',
+                    },
+                    {
+                        rec_id: 'maximo_bistro',
+                        name: 'Máximo Bistrot',
+                        address: 'Av. Oaxaca 179, Roma Nte., Cuauhtémoc, CDMX',
+                        description: 'Cocina de producto con un enfoque en ingredientes locales y de temporada. Menú degustación.',
+                        price_mxn: 1150,
+                        price_cop: 253000,
+                        map_query: 'Máximo Bistrot, Ciudad de México',
+                        image: 'https://images.squarespace-cdn.com/content/v1/5a95f6d54611a0f9ec0a7f5e/1521735758014-VLP22DD79L1G355DZ5TK/Maximo-Bistro.jpg?format=1000w',
+                    },
+                    {
+                        rec_id: 'rossetta',
+                        name: 'Rosetta',
+                        address: 'Colima 166, Roma Nte., Cuauhtémoc, CDMX',
+                        description: 'Restaurante italiano con un toque mexicano en una hermosa casona. Su panadería es legendaria.',
+                        price_mxn: 750,
+                        price_cop: 165000,
+                        map_query: 'Rosetta, Ciudad de México',
+                        image: 'https://i.blogs.es/e71b1e/rosetta-exterior-1/1366_2000.jpg',
+                    },
+                    {
+                        rec_id: 'meroma',
+                        name: 'Meroma',
+                        address: 'Colima 150, Roma Nte., Cuauhtémoc, CDMX',
+                        description: 'Cocina mexicana moderna con un enfoque en la sostenibilidad. Ambiente sofisticado y relajado.',
+                        price_mxn: 600,
+                        price_cop: 132000,
+                        map_query: 'Meroma, Ciudad de México',
+                        image: 'https://images.adsttc.com/media/images/5ac4/37f1/f197/cca4/5f00/02b2/large_jpg/meroma02.jpg?1522808806',
+                    }
+                ]
+            },
+            {
+                id: 'museo_frida_kahlo',
+                name: 'Museo Frida Kahlo (Casa Azul)',
+                address: 'Londres 247, Del Carmen, Coyoacán, 04100 Ciudad de México, CDMX',
+                type: 'Casa-Museo de Artista',
+                description: 'La casa donde nació, vivió y murió la icónica artista Frida Kahlo, transformada en un museo que exhibe su obra y objetos personales.',
+                price_mxn: 270,
+                price_cop: 60000,
+                importance: 'Ofrece una profunda inmersión en la vida y el universo de una de las figuras más importantes del arte mexicano.',
+                image: 'https://www.museofridakahlo.org.mx/wp/wp-content/themes/mfk/images/entrance__musseum.jpg',
+                map_query: 'Museo Frida Kahlo, Ciudad de México',
+                lat: 19.3547,
+                lng: -99.1627
+            },
+            {
+                id: 'centro_coyoacan',
+                name: 'Centro de Coyoacán',
+                address: 'Alrededores de Jardín Centenario y Plaza Hidalgo, Coyoacán',
+                type: 'Barrio Histórico / Cultural',
+                description: 'Uno de los barrios más pintorescos y bohemios de la CDMX, con plazas encantadoras, mercados de artesanías, cafés y restaurantes.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Ideal para pasear, comprar artesanías y sentir el ambiente tradicional de un barrio histórico.',
+                image: 'https://a.travel-assets.com/findyours-php/viewfinder/images/res70/168000/168119-Coyoacan.jpg',
+                map_query: 'Centro de Coyoacán, Ciudad de México',
+                lat: 19.3518,
+                lng: -99.163
+            },
+            {
+                id: 'mercado_artesanias_coyoacan',
+                name: 'Mercado de Artesanías de Coyoacán',
+                address: 'Ignacio Allende 49, Del Carmen, Coyoacán, 04100 Ciudad de México, CDMX',
+                type: 'Mercado de Artesanías',
+                description: 'Un vibrante mercado donde puedes encontrar una gran variedad de productos artesanales mexicanos, desde textiles hasta cerámica y joyería.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Perfecto para encontrar recuerdos auténticos y apoyar a los artesanos locales.',
+                image: 'https://i.ytimg.com/vi/rKz7uTm5YJ0/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD32KRHF7CWHeuc_VuVr4Ph_xEijA',
+                map_query: 'Mercado de Artesanías de Coyoacán',
+                lat: 19.3512,
+                lng: -99.161
+            },
+            {
+                id: 'churros_esquites_coyoacan',
+                name: 'Churros o Esquites en Coyoacán',
+                address: 'Puestos callejeros en Coyoacán',
+                type: 'Gastronomía (Antojito)',
+                description: 'Deliciosos churros con azúcar y canela, o esquites (maíz hervido con mayonesa, queso, chile y limón), antojitos populares mexicanos.',
+                price_mxn: 55,
+                price_cop: 12000,
+                importance: 'Experiencia culinaria callejera esencial para probar sabores locales.',
+                image: 'https://i.ytimg.com/vi/xQOciwq-jAQ/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AH-CYAC0AWKAgwIABABGHIgQSgvMA8=&rs=AOn4CLAy-fVmx9nUvM1l10VKJpvL61pdsQ',
+                map_query: 'Churros y Esquites Coyoacán',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'churreria_el_moro',
+                        name: 'Churrería El Moro (Coyoacán)',
+                        address: 'Francisco Sosa 1, Coyoacán, CDMX',
+                        description: 'La clásica churrería con más de 80 años de tradición. Perfectos para el desayuno o un antojo nocturno.',
+                        price_mxn: 100,
+                        price_cop: 22000,
+                        map_query: 'Churrería El Moro Coyoacán, Ciudad de México',
+                        image: 'https://www.dondeir.com/wp-content/uploads/2019/08/churreria-el-moro-roma.jpg',
+                    },
+                    {
+                        rec_id: 'el_jardin_del_pulpo',
+                        name: 'El Jardín del Pulpo',
+                        address: 'Ignacio Allende 39, Coyoacán, CDMX',
+                        description: 'Famoso por sus quesadillas, sopes y otras delicias mexicanas. Ideal para un antojo rápido.',
+                        price_mxn: 125,
+                        price_cop: 27500,
+                        map_query: 'El Jardín del Pulpo Coyoacán, Ciudad de México',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2c/22/91/76/porfirio-s.jpg?w=1200&h=900&s=1',
+                    },
+                    {
+                        rec_id: 'esquites_coyoacan_main',
+                        name: 'Puesto de Esquites (Jardín Centenario)',
+                        address: 'Cerca del Kiosco en Jardín Centenario, Coyoacán, CDMX',
+                        description: 'Un puesto callejero icónico para probar los esquites en su forma más tradicional. ¡No te lo pierdas!',
+                        price_mxn: 50,
+                        price_cop: 11000,
+                        map_query: 'Puesto de Esquites Jardín Centenario, Coyoacán, Ciudad de México',
+                        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSePUSJVweh9c9AkhC_m24gNeGiiYrh1yrww&s',
+                    },
+                    {
+                        rec_id: 'el_antojo',
+                        name: 'El Antojo Jarocho',
+                        address: 'Higuera 14, Coyoacán, CDMX',
+                        description: 'Especialidades veracruzanas como las picadas y empanadas. Un sabor diferente en Coyoacán.',
+                        price_mxn: 140,
+                        price_cop: 30800,
+                        map_query: 'El Antojo Jarocho Coyoacán, Ciudad de México',
+                        image: 'https://www.sopitas.com/wp-content/uploads/2023/06/el-jarocho-historia-1.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'restaurante_coyoacan',
+                name: 'Restaurante en Coyoacán',
+                address: 'Varias ubicaciones en Coyoacán',
+                type: 'Restaurante',
+                description: 'Disfruta de una cena en el ambiente bohemio de Coyoacán, con opciones que van desde la cocina mexicana tradicional hasta propuestas más contemporáneas.',
+                price_mxn: 250,
+                price_cop: 56000,
+                importance: 'Ideal para terminar el día en uno de los barrios más encantadores de la CDMX.',
+                image: 'https://offloadmedia.feverup.com/cdmxsecreta.com/wp-content/uploads/2023/09/12185819/la-calaca-restaurante-en-coyoacan.jpg',
+                map_query: 'Restaurante Coyoacán, Ciudad de México',
+                lat: 19.352,
+                lng: -99.164,
+                recommended_restaurants: [
+                    {
+                        rec_id: 'corazon_de_maguey',
+                        name: 'Corazón de Maguey',
+                        address: 'Plaza Jardín Centenario 9A, Coyoacán, CDMX',
+                        description: 'Cocina oaxaqueña auténtica y gran variedad de mezcales. Ideal para una experiencia completa.',
+                        price_mxn: 450,
+                        price_cop: 99000,
+                        map_query: 'Corazón de Maguey Coyoacán, Ciudad de México',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2b/22/d4/6b/corazon-de-maguey-en.jpg?w=500&h=-1&s=1',
+                    },
+                    {
+                        rec_id: 'los_almendros',
+                        name: 'Los Almendros',
+                        address: 'Av. Miguel Ángel de Quevedo 333, Coyoacán, CDMX',
+                        description: 'Famoso por su cocina yucateca, especialmente el Pan de Cazón y la Cochinita Pibil. Tradicional y concurrido.',
+                        price_mxn: 375,
+                        price_cop: 82500,
+                        map_query: 'Los Almendros Coyoacán, Ciudad de México',
+                        image: 'https://cdn0.bodas.com.mx/vendor/3917/3_2/960/jpeg/whatsapp-image-2023-09-28-at-18-26-59_5_363917-169594744034877.webp',
+                    },
+                    {
+                        rec_id: 'el_centenario',
+                        name: 'El Centenario (Coyoacán)',
+                        address: 'Jardín Centenario 4, Coyoacán, CDMX',
+                        description: 'Ambiente clásico en la plaza principal de Coyoacán. Ofrece platillos tradicionales mexicanos.',
+                        price_mxn: 300,
+                        price_cop: 66000,
+                        map_query: 'El Centenario Coyoacán, Ciudad de México',
+                        image: 'https://centenario107.mx/wp-content/uploads/2024/08/Home_1200x630_OK.jpg',
+                    },
+                    {
+                        rec_id: 'la_guera_coyoacan',
+                        name: 'La Güera (Coyoacán)',
+                        address: 'Caballito 12-A, Coyoacán, CDMX',
+                        description: 'Restaurante de comida mexicana casera con un toque moderno. Buen servicio y ambiente acogedor.',
+                        price_mxn: 265,
+                        price_cop: 58300,
+                        map_query: 'La Güera Coyoacán, Ciudad de México',
+                        image: 'https://scontent.fntr6-3.fna.fbcdn.net/v/t39.30808-6/474638110_122179257266268027_6535188962775300518_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_ohc=kvJprO0tsFkQ7kNvwEyrE_5&_nc_oc=AdnODLkJJLl8rAjpL1BYcrkMLiGkBj5DBwwwR1U4mFsSfOn4RgKtLsSq6nWIthxhWiPTAFWYiWqpP6yumQnYkrMR&_nc_zt=23&_nc_ht=scontent.fntr6-3.fna&_nc_gid=v80RPyf-_dZVym_PJAXtJA&oh=00_AfPBp0LJ2pVYrOFCKcSXcmx9kyYedxpsIPrBmEvAdqVkLQ&oe=686148CC',
+                    }
+                ]
+            },
+            {
+                id: 'teotihuacan',
+                name: 'Zona Arqueológica de Teotihuacán',
+                address: 'Carretera Pirámides s/n, San Juan Teotihuacán, Méx.',
+                type: 'Zona Arqueológica',
+                description: 'La "Ciudad de los Dioses", una de las ciudades prehispánicas más impresionantes de Mesoamérica, con las Pirámides del Sol y la Luna, y la Calzada de los Muertos.',
+                price_mxn: 90,
+                price_cop: 20000,
+                importance: 'Un Patrimonio de la Humanidad, indispensable para entender el desarrollo de las culturas mesoamericanas.',
+                image: 'https://programadestinosmexico.com/wp-content/uploads/2023/10/Teotihuacan1.jpg',
+                map_query: 'Zona Arqueológica de Teotihuacán',
+                lat: 19.692,
+                lng: -98.843
+            },
+            {
+                id: 'basilica_guadalupe',
+                name: 'Basílica de Guadalupe',
+                address: 'Fray Juan de Zumárraga 2, Gustavo A. Madero, 07210 Ciudad de México, CDMX',
+                type: 'Santuario Religioso',
+                description: 'El principal recinto mariano de México y uno de los centros de peregrinación católica más visitados del mundo. Incluye la antigua y la nueva basílica.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Un lugar de profunda importancia religiosa y cultural para los mexicanos.',
+                image: 'https://visitmexico.com/media/usercontent/6840ab7883688-67fd37070605f-museo-de-la-basilica-de-guadalupe-2_gmxdot_jpg',
+                map_query: 'Basílica de Guadalupe, Ciudad de México',
+                lat: 19.4849,
+                lng: -99.1179
+            },
+            {
+                id: 'museo_casa_estudio_rivera_kahlo',
+                name: 'Museo Casa Estudio Diego Rivera y Frida Kahlo',
+                address: 'Diego Rivera 2, San Ángel Inn, Álvaro Obregón, 01060 Ciudad de México, CDMX',
+                type: 'Casa-Museo de Artista',
+                description: 'Las casas funcionales donde vivieron y trabajaron Diego Rivera y Frida Kahlo, diseñadas por Juan O’Gorman. Una muestra de arquitectura funcionalista y arte.',
+                price_mxn: 35,
+                price_cop: 7800,
+                importance: 'Una alternativa más económica y complementaria a la Casa Azul, mostrando otra faceta de la vida de los artistas.',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkqGDSMSSrII60KC-qssfit-xAk8vIpQcwlA&s',
+                map_query: 'Museo Casa Estudio Diego Rivera y Frida Kahlo',
+                lat: 19.349,
+                lng: -99.187
+            },
+            {
+                id: 'san_angel',
+                name: 'Barrio Mágico de San Ángel',
+                address: 'Alrededores de Plaza San Jacinto y Plaza del Carmen, San Ángel, CDMX',
+                type: 'Barrio Histórico / Cultural',
+                description: 'Un encantador barrio colonial con calles empedradas, casonas antiguas, plazas arboladas y galerías de arte.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Ideal para un paseo tranquilo, admirar la arquitectura y el arte.',
+                image: 'https://cloudfront-us-east-1.images.arcpublishing.com/eluniversal/BIT2SNGCTBDKRPUYC45BJA4QJE.jpg',
+                map_query: 'Barrio San Ángel, Ciudad de México',
+                lat: 19.347,
+                lng: -99.191
+            },
+            {
+                id: 'bazar_sabado',
+                name: 'Bazar Sábado (San Ángel)',
+                address: 'Plaza San Jacinto 11, San Ángel, Álvaro Obregón, 01000 Ciudad de México, CDMX',
+                type: 'Mercado de Arte y Artesanías',
+                description: 'Un famoso bazar que se instala los sábados, ofreciendo una exquisita selección de arte y artesanías de alta calidad. **(Nota: Solo opera los sábados)**',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Si coincide con tu visita, es un lugar imperdible para encontrar piezas únicas y de calidad.',
+                image: 'https://margaretmetcalfephotography.weebly.com/uploads/6/9/9/1/6991508/40421_orig.jpg',
+                map_query: 'Bazar Sábado, San Ángel',
+                lat: 19.348,
+                lng: -99.191
+            },
+            {
+                id: 'fonda_tradicional_cdmx',
+                name: 'Fonda Tradicional',
+                address: 'Varias ubicaciones en CDMX',
+                type: 'Restaurante (Económico)',
+                description: 'Pequeños restaurantes de comida casera mexicana a precios muy accesibles, ideales para el almuerzo o la cena diaria.',
+                price_mxn: 130,
+                price_cop: 29000,
+                importance: 'La opción más auténtica y económica para comer en el día a día.',
+                image: 'https://mxc.com.mx/wp-content/uploads/2024/08/Fonda-mexicana.jpg-5.jpg',
+                map_query: 'Fonda tradicional, Ciudad de México',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'fonda_el_refugio',
+                        name: 'Fonda El Refugio',
+                        address: 'Liverpool 166, Juárez, Cuauhtémoc, CDMX',
+                        description: 'Un clásico con décadas de tradición, comida casera y platillos mexicanos típicos en un ambiente acogedor.',
+                        price_mxn: 225,
+                        price_cop: 49500,
+                        map_query: 'Fonda El Refugio, Ciudad de México',
+                        image: 'https://media.timeout.com/images/101556857/750/422/image.jpg',
+                    },
+                    {
+                        rec_id: 'la_capital',
+                        name: 'La Capital',
+                        address: 'Nuevo León 137, Condesa, Cuauhtémoc, CDMX',
+                        description: 'Cocina mexicana contemporánea con un ambiente moderno y chic. Ideal para una cena más sofisticada sin ser excesiva.',
+                        price_mxn: 450,
+                        price_cop: 99000,
+                        map_query: 'La Capital Condesa, Ciudad de México',
+                        image: 'https://i0.wp.com/hotbook.mx/wp-content/uploads/2017/07/rosa-negra-final.jpg?fit=1024%2C705&ssl=1',
+                    },
+                    {
+                        rec_id: 'las_originales',
+                        name: 'Las Originales',
+                        address: 'Dr. Vertiz 832, Narvarte Poniente, Benito Juárez, CDMX',
+                        description: 'Especialistas en carnitas estilo Michoacán. Un lugar sin lujos, pero con sabor auténtico.',
+                        price_mxn: 175,
+                        price_cop: 38500,
+                        map_query: 'Las Originales Carnitas, Ciudad de México',
+                        image: 'https://media.timeout.com/images/101589227/750/562/image.jpg',
+                    },
+                    {
+                        rec_id: 'el_bajio',
+                        name: 'El Bajío (Polanco)',
+                        address: 'Av. Presidente Masaryk 134, Polanco, Miguel Hidalgo, CDMX',
+                        description: 'Cocina tradicional mexicana con un gran reconocimiento. Famoso por sus carnitas y enfrijoladas. Varias sucursales.',
+                        price_mxn: 375,
+                        price_cop: 82500,
+                        map_query: 'El Bajío Polanco, Ciudad de México',
+                        image: 'https://www.travelreport.mx/wp-content/uploads/2019/10/restaurantes-en-polanco-bajio.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'museo_bellas_artes',
+                name: 'Museo del Palacio de Bellas Artes',
+                address: 'Av. Juárez S/N, Centro Histórico de la Cdad. de México, Centro, Cuauhtémoc, 06050 Ciudad de México, CDMX',
+                type: 'Museo de Arte / Arquitectura',
+                description: 'Un edificio icónico de arquitectura Art Nouveau y Art Decó, que alberga murales de los grandes maestros mexicanos y exposiciones de arte.',
+                price_mxn: 85,
+                price_cop: 19000,
+                importance: 'Una joya arquitectónica y cultural, esencial para los amantes del arte y la belleza.',
+                image: 'https://inba.gob.mx/multimedia/prensa/galerias/19081/19081-GAL-imagen_el_museo_del_palacio_de_bellas_artes_celebra_su_89_aniversario_como_el_primer_recinto_de_arte_(1).jpeg',
+                map_query: 'Palacio de Bellas Artes, Ciudad de México',
+                lat: 19.435,
+                lng: -99.141
+            },
+            {
+                id: 'palacio_postal',
+                name: 'Palacio Postal (Correo Mayor)',
+                address: 'Tacuba 1, Centro Histórico de la Cdad. de México, Centro, Cuauhtémoc, 06000 Ciudad de México, CDMX',
+                type: 'Edificio Histórico / Arquitectónico',
+                description: 'Una impresionante obra maestra arquitectónica de principios del siglo XX, con una riqueza de detalles que lo hacen parecer un palacio.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Aunque es una oficina de correos, su arquitectura por sí sola lo convierte en una visita obligada.',
+                image: 'https://acerobsv.com/blog/img/post/palacio-postal.jpg',
+                map_query: 'Palacio Postal, Ciudad de México',
+                lat: 19.4368,
+                lng: -99.1408
+            },
+            {
+                id: 'compras_centro_historico',
+                name: 'Compras de recuerdos en el Centro Histórico',
+                address: 'Calles Madero, 5 de Mayo, 16 de Septiembre, etc., Centro Histórico, CDMX',
+                type: 'Actividad / Compras',
+                description: 'Explora las diversas tiendas y puestos del Centro Histórico para encontrar souvenirs, artesanías y productos locales.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Una oportunidad para llevarse un pedazo de México a casa.',
+                image: 'https://images.squarespace-cdn.com/content/v1/56c13cc00442627a08632989/c367b40b-d74d-47ec-8c50-56429395aa59/laciudadelaoaxacan.JPG',
+                map_query: 'Centro Histórico de la Ciudad de México',
+                lat: 19.433,
+                lng: -99.135
+            },
+            {
+                id: 'cena_despedida_cdmx',
+                name: 'Cena de Despedida CDMX (con Mariachi/Música)',
+                address: 'Varias ubicaciones en CDMX (ej. Plaza Garibaldi o restaurantes en colonias con ambiente)',
+                type: 'Restaurante / Experiencia Cultural',
+                description: 'Una cena especial para despedir la capital, posiblemente con la opción de disfrutar de mariachi o música en vivo, buscando un lugar asequible pero con buen ambiente.',
+                price_mxn: 375,
+                price_cop: 84000,
+                importance: 'Para una última inmersión en la cultura festiva mexicana.',
+                image: 'https://porfirios.com.mx/wp-content/uploads/2023/03/f1c6066a-a07a-4d85-800d-aa16644ca063-e1680306131503.jpeg',
+                map_query: 'Restaurante con mariachi, Ciudad de México',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'salon_tenampa',
+                        name: 'Salón Tenampa',
+                        address: 'Plaza Garibaldi 12, Centro, Cuauhtémoc, CDMX',
+                        description: 'Un clásico de Plaza Garibaldi, con mariachis en vivo y comida mexicana tradicional. Un ícono de la ciudad.',
+                        price_mxn: 500,
+                        price_cop: 110000,
+                        map_query: 'Salón Tenampa, Ciudad de México',
+                        image: 'https://www.travelreport.mx/wp-content/uploads/2018/08/Cantinas-en-la-Ciudad-de-Me%CC%81xico-salon-tenampa.jpg',
+                    },
+                    {
+                        rec_id: 'casa_merlos',
+                        name: 'Casa Merlos',
+                        address: 'Victoriano Zepeda 80, Observatorio, Miguel Hidalgo, CDMX',
+                        description: 'Especialidades de cocina poblana, famoso por su mole poblano y chiles en nogada (en temporada).',
+                        price_mxn: 375,
+                        price_cop: 82500,
+                        map_query: 'Casa Merlos, Ciudad de México',
+                        image: 'https://imagenes.eleconomista.com.mx/files/webp_768_768/uploads/2025/03/22/67df30d874ec4.jpeg',
+                    },
+                    {
+                        rec_id: 'la_polar',
+                        name: 'La Polar',
+                        address: 'Guillermo Prieto 129, San Rafael, Cuauhtémoc, CDMX',
+                        description: 'Famosa por su birria y su ambiente festivo con música en vivo (mariachi y grupos).',
+                        price_mxn: 325,
+                        price_cop: 71500,
+                        map_query: 'La Polar Birria, Ciudad de México',
+                        image: 'https://www.razon.com.mx/resizer/Nj_cfjHat0fo8qtuuD4cKAfACt0=/arc-photo-larazondemexico/arc2-prod/public/YACWIOQCCFHFVE2N7AFECZ2G5A.jpeg',
+                    },
+                    {
+                        rec_id: 'hacienda_de_los_morales',
+                        name: 'Hacienda de los Morales',
+                        address: 'Vázquez de Mella 525, Polanco, Miguel Hidalgo, CDMX',
+                        description: 'Una elegante hacienda que ofrece cocina mexicana e internacional en un ambiente de lujo. Ideal para una ocasión especial.',
+                        price_mxn: 1050,
+                        price_cop: 231000,
+                        map_query: 'Hacienda de los Morales, Ciudad de México',
+                        image: 'https://www.haciendadelosmorales.com/img/back_hero.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'bus_cdmx_patzcuaro',
+                name: 'Viaje en Autobús Nocturno a Pátzcuaro',
+                address: 'Terminal de Autobuses de Observatorio, CDMX a Terminal de Autobuses de Pátzcuaro',
+                type: 'Transporte',
+                description: 'Viaje cómodo en autobús de primera clase durante la noche para llegar temprano y aprovechar el Día de Muertos en Pátzcuaro.',
+                price_mxn: 750,
+                price_cop: 167000,
+                importance: 'Método eficiente para optimizar el tiempo y llegar al corazón de la celebración de Día de Muertos.',
+                image: 'https://amtm.org.mx/wp-content/uploads/2024/11/movilidaddenoche-1080x675.png',
+                map_query: 'Terminal de Autobuses de Observatorio, Ciudad de México',
+                lat: 19.395,
+                lng: -99.201
+            },
+            {
+                id: 'patzcuaro_centro',
+                name: 'Pátzcuaro (Centro Histórico)',
+                address: 'Plaza Vasco de Quiroga y alrededores, Pátzcuaro, Michoacán',
+                type: 'Pueblo Mágico / Centro Histórico',
+                description: 'Un hermoso Pueblo Mágico con arquitectura colonial, casas de adobe y teja, plazas encantadoras y un ambiente muy tradicional.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Su centro histórico es uno de los más bellos de México y es el epicentro de las celebraciones de Día de Muertos en Michoacán.',
+                image: 'https://grupomarmor.com.mx/storage/2024/06/Patzcuaro.jpg',
+                map_query: 'Pátzcuaro, Michoacán',
+                lat: 19.516,
+                lng: -101.606
+            },
+            {
+                id: 'basilica_salud_patzcuaro',
+                name: 'Basílica de Nuestra Señora de la Salud (Pátzcuaro)',
+                address: 'Ramos S/N, Centro, 61600 Pátzcuaro, Mich.',
+                type: 'Templo Religioso / Histórico-Arquitectónico',
+                description: 'Importante templo de Pátzcuaro, dedicado a la patrona de la región, con una venerada imagen de la Virgen.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Un sitio de gran importancia religiosa y cultural en Pátzcuaro.',
+                image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1e/ac/52/de/basilica-de-nuestra-senora.jpg?w=900&h=500&s=1',
+                map_query: 'Basílica de Nuestra Señora de la Salud, Pátzcuaro',
+                lat: 19.517,
+                lng: -101.605
+            },
+            {
+                id: 'casa_once_patios',
+                name: 'Casa de los Once Patios (Pátzcuaro)',
+                address: 'Dr. Coss 4, Centro, 61600 Pátzcuaro, Mich.',
+                type: 'Centro Artesanal / Arquitectónico',
+                description: 'Un antiguo convento colonial convertido en centro artesanal, donde se pueden admirar y comprar artesanías locales.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Muestra la rica tradición artesanal de Michoacán.',
+                image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1c/cb/7e/85/photo0jpg.jpg?w=900&h=500&s=1',
+                map_query: 'Casa de los Once Patios, Pátzcuaro',
+                lat: 19.515,
+                lng: -101.607
+            },
+            {
+                id: 'janitzio',
+                name: 'Isla de Janitzio',
+                address: 'Lago de Pátzcuaro, Michoacán (accesible en lancha)',
+                type: 'Isla / Pueblo Indígena / Atracción Cultural',
+                description: 'La isla más famosa del lago de Pátzcuaro, conocida por su estatua de Morelos en la cima y por ser un punto clave para observar las tradiciones de Día de Muertos.',
+                price_mxn: 125,
+                price_cop: 27500,
+                importance: 'Experimentar la tradición purépecha de Día de Muertos y sus impresionantes ofrendas.',
+                image: 'https://media.gettyimages.com/id/460674767/photo/monumento-a-jos%C3%A9-mar%C3%ADa-morelos-en-janitzio.jpg?s=1024x1024&w=gi&k=20&c=IjbiEkdhlEjFwciZMbEixh68XPhC3Sz1xRFqdw-y8Tg=',
+                map_query: 'Isla de Janitzio, Lago de Pátzcuaro',
+                lat: 19.571,
+                lng: -101.637
+            },
+            {
+                id: 'tzintzuntzan',
+                name: 'Tzintzuntzan',
+                address: 'A 15 km de Pátzcuaro, Michoacán',
+                type: 'Sitio Arqueológico / Pueblo Indígena / Atracción Cultural',
+                description: 'Antigua capital del imperio purépecha, con ruinas circulares (Yácatas) y un cementerio famoso por sus celebraciones de Día de Muertos. **Alternativa a Janitzio para el Día de Muertos.**',
+                price_mxn: 65,
+                price_cop: 14000,
+                importance: 'Conocer la historia purépecha y vivir el Día de Muertos en un ambiente auténtico y solemne.',
+                image: 'https://cdn.forbes.com.mx/2020/10/Tzintzuntzan-Pueblo-Ma%CC%81gico-2-1-e1602784900656.jpg',
+                map_query: 'Tzintzuntzan, Michoacán',
+                lat: 19.605,
+                lng: -101.597
+            },
+            {
+                id: 'antojitos_patzcuaro',
+                name: 'Antojitos en Pátzcuaro',
+                address: 'Alrededores de la Plaza Vasco de Quiroga, Pátzcuaro',
+                type: 'Gastronomía (Comida Callejera / Antojitos)',
+                description: 'Puestos de comida ofreciendo platillos típicos michoacanos como corundas, uchepos, tamales, y más, perfectos para la noche de Día de Muertos.',
+                price_mxn: 100,
+                price_cop: 22000,
+                importance: 'Una inmersión auténtica en la gastronomía local y festiva.',
+                image: 'https://i.ytimg.com/vi/0TPKM1YUUho/maxresdefault.jpg',
+                map_query: 'Antojitos Pátzcuaro',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'portal_del_refugio_patzcuaro',
+                        name: 'Portal del Refugio',
+                        address: 'Portal de Hidalgo 9, Centro, Pátzcuaro, Mich.',
+                        description: 'Ofrece platillos tradicionales michoacanos y vista a la Plaza Vasco de Quiroga. Ideal para probar las corundas.',
+                        price_mxn: 225,
+                        price_cop: 49500,
+                        map_query: 'Portal del Refugio Pátzcuaro, Michoacán',
+                        image: 'https://escapadas.mexicodesconocido.com.mx/wp-content/uploads/2020/10/huauchinango-meson-del-portal.jpg',
+                    },
+                    {
+                        rec_id: 'la_casona_patzcuaro',
+                        name: 'La Casona del Siglo XIX',
+                        address: 'Portal Morelos 7, Centro, Pátzcuaro, Mich.',
+                        description: 'Ambiente colonial y elegante con comida regional. Sus uchepos son muy recomendados.',
+                        price_mxn: 300,
+                        price_cop: 66000,
+                        map_query: 'La Casona del Siglo XIX Pátzcuaro, Michoacán',
+                        image: 'https://www.mexicodesconocido.com.mx/wp-content/uploads/2022/07/36481376723_18683e65b1_o-scaled.jpg',
+                    },
+                    {
+                        rec_id: 'el_patio_patzcuaro',
+                        name: 'El Patio (Pátzcuaro)',
+                        address: 'Plaza Vasco de Quiroga 19, Centro, Pátzcuaro, Mich.',
+                        description: 'Un restaurante con un agradable patio interior, perfecto para disfrutar de la comida michoacana en un ambiente relajado.',
+                        price_mxn: 200,
+                        price_cop: 44000,
+                        map_query: 'El Patio Pátzcuaro, Michoacán',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/ab/a3/35/restaurante-el-patio.jpg?w=900&h=500&s=1',
+                    },
+                    {
+                        rec_id: 'do_chucha_patzcuaro',
+                        name: 'Doña Chucha',
+                        address: 'Benito Juárez 23, Centro, Pátzcuaro, Mich.',
+                        description: 'Comida casera auténtica michoacana, famoso por sus desayunos y atole de grano.',
+                        price_mxn: 140,
+                        price_cop: 30800,
+                        map_query: 'Doña Chucha Pátzcuaro, Michoacán',
+                        image: 'https://scontent.fntr6-4.fna.fbcdn.net/v/t39.30808-6/481659373_122257458446007704_6813320717549463882_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_ohc=x3G0UuoCWvgQ7kNvwFR8_zX&_nc_oc=AdnqFWzXAX4_ryKWXdJEIFCEDp6lr5ukLcwiJGWR4zJGu92De8fFjN7eM8mbiprRz-A2wudPgWUF2USRXZFUEfwS&_nc_zt=23&_nc_ht=scontent.fntr6-4.fna&_nc_gid=BW0_nrDz-kz0rWqFcUYy2Q&oh=00_AfP_exofoywTwoMmmBf-9zI3J97NIhKkQ0MMjkJq6ba6iA&oe=68615A63',
+                    }
+                ]
+            },
+            {
+                id: 'desayuno_michoacano',
+                name: 'Desayuno Tradicional Michoacano',
+                address: 'Restaurantes locales en Pátzcuaro',
+                type: 'Restaurante',
+                description: 'Disfruta de un desayuno con platillos típicos de Michoacán como corundas, uchepos con salsa, o cecina, antes de partir.',
+                price_mxn: 150,
+                price_cop: 33000,
+                importance: 'Para saborear los últimos momentos de la gastronomía michoacana.',
+                image: 'https://cdn1.matadornetwork.com/blogs/2/2019/12/Chilaquiles-Mexican-breakfast.jpg',
+                map_query: 'Restaurante desayuno Pátzcuaro',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'hotel_portales_patzcuaro',
+                        name: 'Restaurante del Hotel Los Portales',
+                        address: 'Portal Hidalgo 19, Centro, Pátzcuaro, Mich.',
+                        description: 'Un lugar tradicional con desayunos michoacanos clásicos y una excelente vista a la plaza.',
+                        price_mxn: 175,
+                        price_cop: 38500,
+                        map_query: 'Hotel Los Portales Pátzcuaro, Michoacán',
+                        image: 'https://img.chilango.com/2022/11/Salon-Portales-1-1024x683.jpg',
+                    },
+                    {
+                        rec_id: 'cafe_del_portal_patzcuaro',
+                        name: 'Café del Portal',
+                        address: 'Portal de Matamoros 28, Centro, Pátzcuaro, Mich.',
+                        description: 'Un café acogedor ideal para desayunar, con opciones de pan dulce y platillos locales.',
+                        price_mxn: 130,
+                        price_cop: 28600,
+                        map_query: 'Café del Portal Pátzcuaro, Michoacán',
+                        image: 'https://cafeconpan.mx/wp-content/uploads/2021/08/ED90A705-F899-410F-AC16-1C3739D19F4F-2-1024x768.jpg',
+                    },
+                    {
+                        rec_id: 'la_huerta_patzcuaro',
+                        name: 'La Huerta de Pátzcuaro',
+                        address: 'Calzada Lázaro Cárdenas 11, Pátzcuaro, Mich.',
+                        description: 'Conocido por su buffet de desayunos y la variedad de platillos michoacanos que ofrece.',
+                        price_mxn: 185,
+                        price_cop: 40700,
+                        map_query: 'La Huerta de Pátzcuaro, Michoacán',
+                        image: 'https://www.lavozdemichoacan.com.mx/wp-content/uploads/2022/02/huertas-ilegales-aguacate-cambio-ilegal-de-uso-de-suelo.jpg',
+                    },
+                    {
+                        rec_id: 'restaurante_el_mirador_patzcuaro',
+                        name: 'Restaurante El Mirador',
+                        address: 'Cerro del Estribo, Pátzcuaro, Mich.',
+                        description: 'Aunque un poco alejado, ofrece vistas espectaculares del lago y desayunos tradicionales michoacanos.',
+                        price_mxn: 225,
+                        price_cop: 49500,
+                        map_query: 'Restaurante El Mirador Pátzcuaro, Michoacán',
+                        image: 'https://offloadmedia.feverup.com/cdmxsecreta.com/wp-content/uploads/2023/09/01210300/terraza-cha-cha-cha-restaurantes-con-la-mejor-vista-cdmx.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'bus_patzcuaro_cdmx',
+                name: 'Regreso en Autobús a Ciudad de México',
+                address: 'Terminal de Autobuses de Pátzcuaro a Terminal de Autobuses de Observatorio, CDMX',
+                type: 'Transporte',
+                description: 'Viaje en autobús de regreso a la CDMX para conectar con el vuelo a Mérida.',
+                price_mxn: 750,
+                price_cop: 167000,
+                importance: 'Conexión necesaria entre Pátzcuaro y el aeropuerto de la CDMX.',
+                image: 'https://media.tacdn.com/media/attractions-splice-spp-674x446/07/87/ab/33.jpg',
+                map_query: 'Terminal de Autobuses de Pátzcuaro',
+                lat: 19.507,
+                lng: -101.604
+            },
+            {
+                id: 'vuelo_cdmx_merida',
+                name: 'Vuelo de Ciudad de México a Mérida',
+                address: 'Aeropuerto Internacional de la Ciudad de México (AICM) a Aeropuerto Internacional de Mérida (MID)',
+                type: 'Transporte Aéreo',
+                description: 'Vuelo directo de la capital al sureste de México para iniciar la exploración de Yucatán.',
+                price_mxn: 1500,
+                price_cop: 335000,
+                importance: 'El medio más rápido para llegar a Mérida.',
+                image: 'https://cdn-bunny.menteurbana.mx/wp-content/uploads/2016/08/Mexico-DF-Merida-1-1024x565.png',
+                map_query: 'Aeropuerto Internacional de Mérida, Yucatán',
+                lat: 20.9385,
+                lng: -89.2713
+            },
+            {
+                id: 'cena_ligera_merida',
+                name: 'Cena Ligera en Mérida',
+                address: 'Cerca del alojamiento en Mérida',
+                type: 'Restaurante',
+                description: 'Una cena relajada tras la llegada a Mérida, ideal para descansar después de un día de viaje.',
+                price_mxn: 175,
+                price_cop: 39000,
+                importance: 'Para recargar energías y prepararse para la aventura yucateca.',
+                image: 'https://mindtrip.ai/cdn-cgi/image/w=1200,format=webp,h=1200,fit=cover/https://tcdn.mindtrip.ai/images/218913/1888p1a.png',
+                map_query: 'Restaurante en Mérida',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'la_chaya_maya',
+                        name: 'La Chaya Maya (Centro)',
+                        address: 'Calle 62 483, Centro, Mérida, Yuc.',
+                        description: 'Uno de los restaurantes más populares para probar la cocina yucateca auténtica, con tortillas hechas a mano.',
+                        price_mxn: 250,
+                        price_cop: 55000,
+                        map_query: 'La Chaya Maya Centro, Mérida, Yucatán',
+                        image: 'https://mindtrip.ai/cdn-cgi/image/w=1200,format=webp,h=1200,fit=cover/https://tcdn.mindtrip.ai/images/218913/1888p1a.png',
+                    },
+                    {
+                        rec_id: 'los_almendros_merida',
+                        name: 'Los Almendros (Mérida)',
+                        address: 'Calle 50-A 493, Centro, Mérida, Yuc.',
+                        description: 'Famoso por su cocina yucateca tradicional, con platillos como cochinita pibil y sopa de lima.',
+                        price_mxn: 300,
+                        price_cop: 66000,
+                        map_query: 'Los Almendros Mérida, Yucatán',
+                        image: 'https://cdn.tasteatlas.com/Images/Restaurants/458a696170d4492b88c08e1271ed8819.jpg?m=facebook',
+                    },
+                    {
+                        rec_id: 'kuuk',
+                        name: 'Kuuk',
+                        address: 'Calle 60 488, Centro, Mérida, Yuc.',
+                        description: 'Cocina yucateca de vanguardia en un hermoso escenario colonial. Experiencia gastronómica de alto nivel.',
+                        price_mxn: 1150,
+                        price_cop: 253000,
+                        map_query: 'Kuuk, Mérida, Yucatán',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/08/e1/bb/b4/k-u-uk.jpg?w=900&h=500&s=1',
+                    },
+                    {
+                        rec_id: 'apoala',
+                        name: 'Apoala Mexican Cuisine',
+                        address: 'Calle 60 471, Centro, Mérida, Yuc.',
+                        description: 'Cocina oaxaqueña moderna con un enfoque en sabores auténticos y presentaciones creativas.',
+                        price_mxn: 450,
+                        price_cop: 99000,
+                        map_query: 'Apoala Mexican Cuisine, Mérida, Yucatán',
+                        image: 'https://yucapedia.com/wp-content/uploads/2017/05/Apoala-restaurante-2.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'plaza_grande_merida',
+                name: 'Plaza Grande (Mérida)',
+                address: 'Centro Histórico, Mérida, Yucatán',
+                type: 'Plaza Principal / Centro Cívico',
+                description: 'El corazón de Mérida, rodeado por la Catedral, el Palacio de Gobierno y la Casa de Montejo, con un ambiente animado y sillas confidentes para descansar.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Punto de partida para explorar el centro histórico y observar la vida local.',
+                image: 'https://content.r9cdn.net/rimg/dimg/32/88/3ed424ac-lm-91586-1601257104a.jpg?width=1200&height=630&xhint=2527&yhint=2079&crop=true',
+                map_query: 'Plaza Grande, Mérida, Yucatán',
+                lat: 20.967,
+                lng: -89.623
+            },
+            {
+                id: 'catedral_merida',
+                name: 'Catedral de San Ildefonso (Mérida)',
+                address: 'Calle 60 S/N x 61 y 63, Centro, 97000 Mérida, Yuc.',
+                type: 'Templo Religioso / Histórico-Arquitectónico',
+                description: 'La catedral más antigua de la América continental, construida con piedras de la antigua ciudad maya de T\'ho.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Un ejemplo impactante de arquitectura colonial y de la superposición cultural en Yucatán.',
+                image: 'https://static.wixstatic.com/media/a6900c_c09359876dab4853b8eaff35f2b60565~mv2.jpg/v1/fill/w_2560,h_1710,al_c,q_90/Cathedral%20de%20Merida%20(DSC_7032).jpg',
+                map_query: 'Catedral de San Ildefonso, Mérida',
+                lat: 20.967,
+                lng: -89.623
+            },
+            {
+                id: 'palacio_gobierno_merida',
+                name: 'Palacio de Gobierno (Mérida)',
+                address: 'Calle 61 S/N x 60 y 62, Centro, 97000 Mérida, Yuc.',
+                type: 'Edificio Gubernamental / Histórico',
+                description: 'Edificio histórico con hermosos murales del artista Fernando Castro Pacheco que narran la historia de Yucatán.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Ofrece una perspectiva artística y visual de la historia yucateca.',
+                image: 'https://www.yucatan.gob.mx/docs/galerias/palacio_gobierno/0.jpg',
+                map_query: 'Palacio de Gobierno, Mérida, Yucatán',
+                lat: 20.9676,
+                lng: -89.6235
+            },
+            {
+                id: 'paseo_montejo',
+                name: 'Paseo de Montejo',
+                address: 'Av. Paseo de Montejo, Mérida, Yucatán',
+                type: 'Avenida Histórica / Arquitectónica',
+                description: 'La avenida más elegante de Mérida, flanqueada por majestuosas casonas coloniales y afrancesadas de la época del auge henequenero.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Ideal para un paseo tranquilo y admirar la arquitectura.',
+                image: 'https://topyucatan.com/uploads/notas/que-hacer-en-paseo-de-montejo-guia-turistica.jpg',
+                map_query: 'Paseo de Montejo, Mérida, Yucatán',
+                lat: 20.982,
+                lng: -89.623
+            },
+            {
+                id: 'loncheria_merida',
+                name: 'Lonchería Tradicional (Cochinita Pibil/Lechón)',
+                address: 'Varias ubicaciones en Mérida (ej. Barrios de Santiago o Santa Lucía)',
+                type: 'Restaurante (Económico / Local)',
+                description: 'Lugares sencillos donde se sirven platillos yucatecos auténticos como cochinita pibil, lechón al horno, panuchos, salbutes, etc., a precios muy accesibles.',
+                price_mxn: 165,
+                price_cop: 37000,
+                importance: 'La mejor forma de sumergirse en la rica y única gastronomía yucateca.',
+                image: 'https://i.ytimg.com/vi/0W_bY4XeEU0/hqdefault.jpg',
+                map_query: 'Lonchería Mérida',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'loncheria_el_chisme',
+                        name: 'Lonchería El Chisme',
+                        address: 'Calle 50 491-C, Centro, Mérida, Yuc.',
+                        description: 'Un lugar pequeño y auténtico, famoso por su cochinita pibil y sus panuchos.',
+                        price_mxn: 105,
+                        price_cop: 23100,
+                        map_query: 'Lonchería El Chisme Mérida, Yucatán',
+                        image: 'https://ubicandoando.com/wp-content/uploads/2023/04/85451283-8ddc-49a4-b2eb-b0d220318bbe.jpeg',
+                    },
+                    {
+                        rec_id: 'wayan_e_merida',
+                        name: 'Wayane',
+                        address: 'Calle 59 470, Centro, Mérida, Yuc.',
+                        description: 'Un favorito local para tacos de guisado. Perfecto para desayunos y almuerzos rápidos.',
+                        price_mxn: 85,
+                        price_cop: 18700,
+                        map_query: 'Wayane Mérida, Yucatán',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/15/73/2f/60/castakan-con-queso-y.jpg?w=900&h=500&s=1',
+                    },
+                    {
+                        rec_id: 'los_aguachiles_merida',
+                        name: 'Los Aguachiles (Mercado de Santiago)',
+                        address: 'Mercado de Santiago, Calle 57, Centro, Mérida, Yuc.',
+                        description: 'Dentro del Mercado de Santiago, ideal para probar mariscos frescos y ceviches a buen precio.',
+                        price_mxn: 175,
+                        price_cop: 38500,
+                        map_query: 'Los Aguachiles Mercado Santiago, Mérida, Yucatán',
+                        image: 'https://i.blogs.es/99f103/como-preparar-un-aguachile-verde-de-camaron-con-pepino-queda-picosito-y-necesitas-menos-de-10-ingredientes/450_1000.jpg',
+                    },
+                    {
+                        rec_id: 'el_barrio_merida',
+                        name: 'El Barrio',
+                        address: 'Calle 53 500, Centro, Mérida, Yuc.',
+                        description: 'Cocina mexicana contemporánea con un toque tradicional. Excelente ambiente y servicio.',
+                        price_mxn: 225,
+                        price_cop: 49500,
+                        map_query: 'El Barrio Mérida, Yucatán',
+                        image: 'https://scontent.fntr6-4.fna.fbcdn.net/v/t1.6435-9/102457626_1584103465099059_7469054771781959680_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=f727a1&_nc_ohc=s3VAnj4ZvbMQ7kNvwG3X1B2&_nc_oc=Adki67id3b-F7MBb5j8bWP9wX0erPTvj__0VI3tbHvNbUnWK5rVrU-wOSY0WX_dzGm12SdxjiRuw3vJp60qddvb&_nc_zt=23&_nc_ht=scontent.fntr6-4.fna&_nc_gid=rWKhOsnt28DrX6X0ldajrg&oh=00_AfORQoDsoQBIpRgyGmsVfI1QYQS9T9cfodBXgAgSPx0fw&oe=688315B1',
+                    }
+                ]
+            },
+            {
+                id: 'uxmal',
+                name: 'Zona Arqueológica de Uxmal',
+                address: 'Carretera Federal No. 261, Ruinas de Uxmal, 97890 Uxmal, Yuc.',
+                type: 'Zona Arqueológica Maya',
+                description: 'Uno de los sitios mayas más importantes y mejor conservados de la Ruta Puuc, famoso por la Pirámide del Adivino y el Cuadrilátero de las Monjas.',
+                price_mxn: 490,
+                price_cop: 110000,
+                importance: 'Imprescindible para comprender el estilo Puuc de la arquitectura maya, diferente a Chichén Itzá.',
+                image: 'https://www.inah.gob.mx/images/zonas/yucatan/uxmal/20220810_za_uxmal_head.jpg',
+                map_query: 'Zona Arqueológica de Uxmal, Yucatán',
+                lat: 20.362,
+                lng: -89.771
+            },
+            {
+                id: 'kabah',
+                name: 'Zona Arqueológica de Kabah',
+                address: 'Carretera Federal 261, 97890 Kabah, Yuc.',
+                type: 'Zona Arqueológica Maya',
+                description: 'Parte de la Ruta Puuc, conocida por el Palacio de los Mascarones y sus elaboradas fachadas con representaciones del dios Chaac.',
+                price_mxn: 65,
+                price_cop: 14000,
+                importance: 'Un complemento interesante a Uxmal para apreciar más el estilo Puuc.',
+                image: 'https://www.yucatan.gob.mx/docs/galerias/kabah/15.jpg',
+                map_query: 'Zona Arqueológica de Kabah, Yucatán',
+                lat: 20.244,
+                lng: -89.588
+            },
+            {
+                id: 'restaurante_santiago_santa_lucia',
+                name: 'Restaurante en Barrios de Santiago o Santa Lucía',
+                address: 'Barrios de Santiago o Santa Lucía, Mérida',
+                type: 'Restaurante',
+                description: 'Disfruta de la gastronomía yucateca en restaurantes con encanto en estos tradicionales barrios de Mérida.',
+                price_mxn: 250,
+                price_cop: 56000,
+                importance: 'Descubre la vida nocturna y culinaria de estos vibrantes barrios.',
+                image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/05/ee/b5/fd/ambrosia.jpg?w=900&h=500&s=1',
+                map_query: 'Restaurante barrio Santiago, Mérida',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'la_recova_santiago',
+                        name: 'La Recova de Santiago',
+                        address: 'Calle 57 471, Centro, Mérida, Yuc.',
+                        description: 'Fusión de cocina yucateca y mariscos en un ambiente relajado en el corazón del barrio de Santiago.',
+                        price_mxn: 325,
+                        price_cop: 71500,
+                        map_query: 'La Recova de Santiago, Mérida, Yucatán',
+                        image: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/07/e0/98/95/la-recova-santa-lucia.jpg?w=900&h=500&s=1',
+                    },
+                    {
+                        rec_id: 'los_dos_catrines',
+                        name: 'Los Dos Catrines',
+                        address: 'Calle 60 487A, Centro, Mérida, Yuc.',
+                        description: 'Cocina mexicana con un toque moderno y coctelería creativa. Ubicado en el barrio de Santa Lucía.',
+                        price_mxn: 375,
+                        price_cop: 82500,
+                        map_query: 'Los Dos Catrines, Mérida, Yucatán',
+                        image: 'https://escapadas.mexicodesconocido.com.mx/wp-content/uploads/2020/12/Dos-Catrinas-Tuna-Tlayuda-Punta-de-Mita-letrero-nombre.png',
+                    },
+                    {
+                        rec_id: 'oliva_e',
+                        name: 'Oliva Enoteca',
+                        address: 'Calle 47 483, Centro, Mérida, Yuc.',
+                        description: 'Cocina italiana de alta calidad con una excelente selección de vinos. Ambiente íntimo y elegante.',
+                        price_mxn: 600,
+                        price_cop: 132000,
+                        map_query: 'Oliva Enoteca, Mérida, Yucatán',
+                        image: 'https://static.wixstatic.com/media/a6900c_28c87fa2583e41d48a903d85a9ac5def~mv2.jpg/v1/fill/w_2560,h_1709,al_c,q_90/Oliva%20Enoteca%20(DSC_7092).jpg',
+                    },
+                    {
+                        rec_id: 'el_adios',
+                        name: 'El Adiós',
+                        address: 'Calle 62 481, Centro, Mérida, Yuc.',
+                        description: 'Un bar y restaurante con música en vivo y comida casual mexicana. Perfecto para una noche relajada.',
+                        price_mxn: 250,
+                        price_cop: 55000,
+                        map_query: 'El Adiós Mérida, Yucatán',
+                        image: 'https://i.blogs.es/68169b/los-mejores-restaurantes-cenas-fin-de-ano-mexico-noticias-terraza-cha-cha-cha/450_1000.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'chichen_itza',
+                name: 'Zona Arqueológica de Chichén Itzá',
+                address: 'Carretera Federal 180, Pisté, 97751 Tinum, Yuc.',
+                type: 'Zona Arqueológica Maya',
+                description: 'Una de las Siete Nuevas Maravillas del Mundo, con la icónica Pirámide de Kukulkán, el Observatorio y el Cenote Sagrado.',
+                price_mxn: 614,
+                price_cop: 137000,
+                importance: 'Un sitio maya de renombre mundial y una experiencia que no deben perderse, a pesar de ser muy turístico.',
+                image: 'https://www.viajefest.com/wp-content/uploads/2019/11/Chihen-itza-2020.jpg',
+                map_query: 'Zona Arqueológica de Chichén Itzá',
+                lat: 20.683,
+                lng: -88.568
+            },
+            {
+                id: 'cenote_ik_kil',
+                name: 'Cenote Ik Kil',
+                address: 'Km 122 carretera federal 180, Valladolid, Yuc.',
+                type: 'Cenote (Pozo Natural de Agua Dulce)',
+                description: 'Un impresionante cenote a cielo abierto con lianas colgantes y aguas cristalinas, ideal para un baño refrescante después de visitar Chichén Itzá.',
+                price_mxn: 100,
+                price_cop: 22000,
+                importance: 'Una experiencia refrescante y única de la Península de Yucatán, conectada con la cultura maya.',
+                image: 'https://dexter.cancunairporttransportations.com/vendor/blog/gallery/2022/05/cenote_ik_kil-tour.jpg',
+                map_query: 'Cenote Ik Kil, Yucatán',
+                lat: 20.662,
+                lng: -88.583
+            },
+            {
+                id: 'cenote_xkeken',
+                name: 'Cenote Xkeken',
+                address: 'Carretera Federal 180 Mérida-Cancún Km. 45, Valladolid, Yuc.',
+                type: 'Cenote (Pozo Natural de Agua Dulce)',
+                description: 'Un cenote subterráneo con formaciones de estalactitas y estalagmitas, iluminado por una abertura en el techo. Una experiencia más íntima.',
+                price_mxn: 120,
+                price_cop: 27000,
+                importance: 'Una alternativa al Cenote Ik Kil, ofreciendo una experiencia subterránea fascinante.',
+                image: 'https://www.chichenitza.com/wp-content/uploads/2020/07/cenote_xkeken_chichen_itza_01.jpg',
+                map_query: 'Cenote Xkeken, Yucatán',
+                lat: 20.655,
+                lng: -88.192
+            },
+            {
+                id: 'progreso_playa',
+                name: 'Progreso (Playa y Malecón)',
+                address: 'Puerto Progreso, Yucatán',
+                type: 'Playa / Destino Costero',
+                description: 'Ciudad costera cercana a Mérida, ideal para un día de playa, disfrutar del malecón y probar mariscos frescos.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Una opción de relax y mar cerca de Mérida.',
+                image: 'https://www.mexicodesconocido.com.mx/wp-content/uploads/2021/04/malec%C3%B3n-internacional-de-progreso-scaled.jpg',
+                map_query: 'Puerto Progreso, Yucatán',
+                lat: 21.282,
+                lng: -89.664
+            },
+            {
+                id: 'izamal_pueblo_magico',
+                name: 'Izamal (Pueblo Mágico Amarillo)',
+                address: 'Aprox. 70 km al este de Mérida, Yucatán',
+                type: 'Pueblo Mágico / Sitio Histórico',
+                description: 'Un hermoso pueblo colonial completamente pintado de amarillo, famoso por su Convento de San Antonio de Padua y la pirámide Kinich Kakmó.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Una joya visual y cultural que combina herencia maya y colonial.',
+                image: 'https://pinkplankton.com/wp-content/uploads/2021/05/DSC02213.jpg',
+                map_query: 'Izamal, Yucatán',
+                lat: 20.925,
+                lng: -89.015
+            },
+            {
+                id: 'cena_despedida_merida',
+                name: 'Cena de Despedida en Mérida (con Trova Yucateca)',
+                address: 'Restaurantes con música de trova en Mérida',
+                type: 'Restaurante / Experiencia Cultural',
+                description: 'Una última cena en Mérida, con la posibilidad de disfrutar de la suave y romántica trova yucateca, un género musical tradicional de la región.',
+                price_mxn: 325,
+                price_cop: 72000,
+                importance: 'Una experiencia cultural y gastronómica para cerrar el viaje en Yucatán.',
+                image: 'https://travelyucatan.com/wp-content/uploads/2020/02/trova-yucateca.jpg',
+                map_query: 'Restaurante con trova yucateca, Mérida',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'restaurant_ambrosia_merida',
+                        name: 'Restaurante Ambrosía',
+                        address: 'Calle 60 491, Centro, Mérida, Yuc.',
+                        description: 'Ofrece cocina internacional y yucateca en un ambiente elegante con música en vivo. A menudo tienen trova.',
+                        price_mxn: 375,
+                        price_cop: 82500,
+                        map_query: 'Restaurante Ambrosía Mérida, Yucatán',
+                        image: 'https://ambrosia.mx/wp-content/uploads/2023/11/Ambrosia-Reforma.jpg',
+                    },
+                    {
+                        rec_id: 'la_prosperidad',
+                        name: 'La Prosperidad (Cantina)',
+                        address: 'Calle 53 490, Centro, Mérida, Yuc.',
+                        description: 'Cantina tradicional con botanas y platillos yucatecos. Frecuentemente con música de trova en vivo.',
+                        price_mxn: 200,
+                        price_cop: 44000,
+                        map_query: 'La Prosperidad Mérida, Yucatán',
+                        image: 'https://sipse.com/novedades-yucatan/wp-content/uploads/2015/03/PROSPERIDAD-MERIDA.jpg',
+                    },
+                    {
+                        rec_id: 'el_meson_del_mestizo',
+                        name: 'El Mesón del Mestizo',
+                        address: 'Calle 64 496, Centro, Mérida, Yuc.',
+                        description: 'Comida yucateca y noches de trova en un ambiente acogedor. Precios accesibles.',
+                        price_mxn: 250,
+                        price_cop: 55000,
+                        map_query: 'El Mesón del Mestizo Mérida, Yucatán',
+                        image: 'https://media-cdn.tripadvisor.com/media/photo-m/1280/1c/54/a1/55/ila-mejor-vista-en-el.jpg',
+                    },
+                    {
+                        rec_id: 'la_fundacion_mezcaleria',
+                        name: 'La Fundación Mezcalería',
+                        address: 'Calle 56 471, Centro, Mérida, Yuc.',
+                        description: 'Bar con amplia selección de mezcales y algunas opciones de comida. A menudo hay grupos de trova o música en vivo.',
+                        price_mxn: 200,
+                        price_cop: 44000,
+                        map_query: 'La Fundación Mezcalería Mérida, Yucatán',
+                        image: 'https://www.mayantravel.net/wp-content/uploads/2016/04/IMG_20160429_163659.jpg',
+                    }
+                ]
+            },
+            {
+                id: 'mid_aeropuerto',
+                name: 'Aeropuerto Internacional de Mérida (MID)',
+                address: 'Carr. Mérida a Cancún Km 4.5, 97291 Mérida, Yuc.',
+                type: 'Transporte',
+                description: 'Aeropuerto que sirve a la ciudad de Mérida y la península de Yucatán.',
+                price_mxn: 0,
+                price_cop: 0,
+                importance: 'Punto de partida para el regreso de la familia.',
+                image: 'https://cloudfront-us-east-1.images.arcpublishing.com/elfinanciero/TCENMXZSEHQMLNLU6WWWYTXJYM.jpg',
+                map_query: 'Aeropuerto Internacional de Mérida, Yucatán',
+                lat: 20.9385,
+                lng: -89.2713
+            },
+            {
+                id: 'desayuno_final_merida',
+                name: 'Desayuno Final en Mérida',
+                address: 'Cerca del alojamiento en Mérida',
+                type: 'Restaurante',
+                description: 'Un último desayuno en Mérida para disfrutar de los sabores yucatecos antes de la partida.',
+                price_mxn: 140,
+                price_cop: 31000,
+                importance: 'Última oportunidad para disfrutar de la gastronomía yucateca.',
+                image: 'https://www.visitmexico.com/media/usercontent/5860ab7883688-67fd37070605f-comida-mexicana-desayuno_gmxdot_jpg',
+                map_query: 'Restaurante desayuno Mérida',
+                recommended_restaurants: [
+                    {
+                        rec_id: 'mercado_santiago_desayuno',
+                        name: 'Desayuno en el Mercado de Santiago',
+                        address: 'Calle 57, Centro, Mérida, Yuc.',
+                        description: 'Varios puestos ofrecen desayunos económicos y auténticos, como cochinita, huevos motuleños y jugos frescos.',
+                        price_mxn: 85,
+                        price_cop: 18700,
+                        map_query: 'Mercado de Santiago, Mérida, Yucatán',
+                        image: 'https://www.casaloltun.com/wp-content/uploads/2023/10/Mercado-de-Santiago-Mérida-Tacos.jpg',
+                    },
+                    {
+                        rec_id: 'cafe_la_parroquia',
+                        name: 'Café La Parroquia',
+                        address: 'Calle 60 488, Centro, Mérida, Yuc.',
+                        description: 'Un clásico en Mérida para desayunar, con un menú amplio que incluye platillos yucatecos y panadería.',
+                        price_mxn: 140,
+                        price_cop: 30800,
+                        map_query: 'Café La Parroquia Mérida, Yucatán',
+                        image: 'https://img.chilango.com/2019/02/gran-cafe-de-la-parroquia-cdmx.jpg',
+                    },
+                    {
+                        rec_id: 'pancho_villa_merida',
+                        name: 'Pancho Villa',
+                        address: 'Calle 59 479, Centro, Mérida, Yuc.',
+                        description: 'Restaurante casual con opciones de desayuno mexicano. Famoso por sus porciones generosas.',
+                        price_mxn: 125,
+                        price_cop: 27500,
+                        map_query: 'Pancho Villa Mérida, Yucatán',
+                        image: 'https://mbmarcobeteta.com/wp-content/uploads/2021/10/la-opera-bar.jpg',
+                    },
+                    {
+                        rec_id: 'el_barrio_desayuno',
+                        name: 'El Barrio (Desayuno)',
+                        address: 'Calle 53 500, Centro, Mérida, Yuc.',
+                        description: 'Además de la cena, El Barrio ofrece desayunos con platillos creativos y un ambiente encantador.',
+                        price_mxn: 175,
+                        price_cop: 38500,
+                        map_query: 'El Barrio Mérida, Yucatán',
+                        image: 'https://holasoynatasha.com/wp-content/uploads/2024/04/el-barrio-merida-desayuno.jpg',
+                    }
+                ]
+            },
+        ];
+
+        // Datos del itinerario
+        const itineraryData = [
+            {
+                date: 'Jueves, 24 de octubre',
+                day_id: 'day1',
+                activities: [
+                    { time: 'Tarde', name: 'Llegada al Aeropuerto Internacional de la Ciudad de México (AICM)', short_desc: 'Llegada y traslado al alojamiento.', placeId: 'aicm' },
+                    { time: 'Tarde', name: 'Descanso y aclimatación', short_desc: 'Tiempo libre para relajarse después del viaje.', placeId: null },
+                    { time: 'Noche', name: 'Cena en una Taquería Local', short_desc: 'Primera inmersión gastronómica en la CDMX.', placeId: 'taqueria_cdmx' },
+                ],
+            },
+            {
+                date: 'Viernes, 25 de octubre',
+                day_id: 'day2',
+                activities: [
+                    { time: 'Mañana', name: 'Visita al Palacio Nacional y Murales de Diego Rivera', short_desc: 'Explora la historia de México a través del arte.', placeId: 'palacio_nacional' },
+                    { time: 'Mañana', name: 'Visita a la Catedral Metropolitana de la Ciudad de México', short_desc: 'La majestuosa catedral en el corazón del Zócalo.', placeId: 'catedral_metropolitana' },
+                    { time: 'Tarde', name: 'Recorrido por el Templo Mayor y su museo', short_desc: 'Vestigios de la antigua Tenochtitlán.', placeId: 'templo_mayor' },
+                    { time: 'Noche', name: 'Cena en Restaurante de Comida Tradicional (Alameda Central)', short_desc: 'Sabores auténticos cerca de la Alameda Central.', placeId: 'restaurante_tradicional_cdmx' },
+                ],
+            },
+            {
+                date: 'Sábado, 26 de octubre',
+                day_id: 'day3',
+                activities: [
+                    { time: 'Mañana', name: 'Museo Nacional de Antropología (MNA)', short_desc: 'Esencial para entender las culturas prehispánicas.', placeId: 'museo_antropologia' },
+                    { time: 'Tarde', name: 'Paseo por el Bosque de Chapultepec', short_desc: 'Disfruta de la naturaleza en el pulmón de la CDMX.', placeId: 'bosque_chapultepec' },
+                    { time: 'Tarde', name: 'Visita al Castillo de Chapultepec (Museo Nacional de Historia)', short_desc: 'Vistas panorámicas y historia de México.', placeId: 'castillo_chapultepec' },
+                    { time: 'Noche', name: 'Cena en la Condesa o Roma Norte', short_desc: 'Ambiente vibrante con opciones de comida moderna.', placeId: 'restaurante_condesa_roma' },
+                ],
+            },
+            {
+                date: 'Domingo, 27 de octubre',
+                day_id: 'day4',
+                activities: [
+                    { time: 'Mañana', name: 'Visita a la Casa Azul (Museo Frida Kahlo)', short_desc: 'Inmersión en la vida y obra de Frida Kahlo (reservar!).', placeId: 'museo_frida_kahlo' },
+                    { time: 'Tarde', name: 'Paseo por el Centro de Coyoacán y Mercado de Artesanías', short_desc: 'Barrio bohemio ideal para explorar y comprar.', placeId: 'centro_coyoacan' },
+                    { time: 'Tarde', name: 'Degustación de Churros o Esquites en Coyoacán', short_desc: 'Antojitos callejeros tradicionales.', placeId: 'churros_esquites_coyoacan' },
+                    { time: 'Noche', name: 'Cena en Coyoacán', short_desc: 'Disfruta del ambiente nocturno del barrio.', placeId: 'restaurante_coyoacan' },
+                ],
+            },
+            {
+                date: 'Lunes, 28 de octubre',
+                day_id: 'day5',
+                activities: [
+                    { time: 'Mañana', name: 'Excursión a la Zona Arqueológica de Teotihuacán', short_desc: 'Impresionantes pirámides del Sol y la Luna.', placeId: 'teotihuacan' },
+                    { time: 'Tarde', name: 'Visita a la Basílica de Guadalupe', short_desc: 'Santuario religioso de gran importancia.', placeId: 'basilica_guadalupe' },
+                    { time: 'Noche', name: 'Cena cerca de su alojamiento', short_desc: 'Cena relajada y conveniente.', placeId: 'fonda_tradicional_cdmx' },
+                ],
+            },
+            {
+                date: 'Martes, 29 de octubre',
+                day_id: 'day6',
+                activities: [
+                    { time: 'Mañana', name: 'Visita al Museo Casa Estudio Diego Rivera y Frida Kahlo', short_desc: 'Arquitectura funcionalista y arte de los Rivera-Kahlo.', placeId: 'museo_casa_estudio_rivera_kahlo' },
+                    { time: 'Tarde', name: 'Explorar las calles empedradas de San Ángel', short_desc: 'Paseo por este encantador barrio mágico.', placeId: 'san_angel' },
+                    { time: 'Tarde (Si es sábado)', name: 'Paseo por el Bazar Sábado (si coincide)', short_desc: 'Mercado de arte y artesanías de alta calidad.', placeId: 'bazar_sabado' },
+                    { time: 'Noche', name: 'Cena en una Fonda Tradicional', short_desc: 'Comida casera mexicana a buen precio.', placeId: 'fonda_tradicional_cdmx' },
+                ],
+            },
+            {
+                date: 'Miércoles, 30 de octubre',
+                day_id: 'day7',
+                activities: [
+                    { time: 'Mañana', name: 'Visita al Museo del Palacio de Bellas Artes', short_desc: 'Joya arquitectónica y cultural con murales.', placeId: 'museo_bellas_artes' },
+                    { time: 'Mañana', name: 'Visita al Palacio Postal (Correo Mayor)', short_desc: 'Admira su impresionante arquitectura.', placeId: 'palacio_postal' },
+                    { time: 'Tarde', name: 'Compras de recuerdos y souvenirs en el Centro Histórico', short_desc: 'Tiempo para llevarse un pedazo de México a casa.', placeId: 'compras_centro_historico' },
+                    { time: 'Noche', name: 'Cena de Despedida CDMX (con Mariachi/Música)', short_desc: 'Una cena especial para cerrar la visita a la capital.', placeId: 'cena_despedida_cdmx' },
+                ],
+            },
+            {
+                date: 'Jueves, 31 de octubre',
+                day_id: 'day8',
+                activities: [
+                    { time: 'Mañana', name: 'Tiempo libre y compras de último momento', short_desc: 'Aprovechar para visitar algo pendiente o hacer compras.', placeId: null },
+                    { time: 'Tarde', name: 'Preparativos y empacar para el viaje nocturno', short_desc: 'Organizarse para la salida hacia Pátzcuaro.', placeId: null },
+                    { time: 'Noche', name: 'Viaje en Autobús Nocturno a Pátzcuaro', short_desc: 'Salida hacia Pátzcuaro para el Día de Muertos.', placeId: 'bus_cdmx_patzcuaro' },
+                ],
+            },
+            {
+                date: 'Viernes, 1 de noviembre',
+                day_id: 'day9',
+                activities: [
+                    { time: 'Madrugada', name: 'Llegada a Pátzcuaro', short_desc: 'Llegada y resguardo de maletas.', placeId: 'patzcuaro_centro' },
+                    { time: 'Día', name: 'Explorar el Centro de Pátzcuaro y Basílica de Nuestra Señora de la Salud', short_desc: 'Pueblo Mágico con encanto colonial.', placeId: 'patzcuaro_centro' },
+                    { time: 'Día', name: 'Visita a la Casa de los Once Patios', short_desc: 'Centro artesanal en un bello edificio colonial.', placeId: 'casa_once_patios' },
+                    { time: 'Tarde/Noche', name: 'Vivencia del Día de Muertos en Janitzio o Tzintzuntzan', short_desc: 'Experiencia inolvidable en los cementerios iluminados. (Elegir Janitzio o Tzintzuntzan)', placeId: 'janitzio' },
+                    { time: 'Noche', name: 'Cena de Antojitos en Pátzcuaro', short_desc: 'Sabores locales para la noche de Día de Muertos.', placeId: 'antojitos_patzcuaro' },
+                ],
+            },
+            {
+                date: 'Sábado, 2 de noviembre',
+                day_id: 'day10',
+                activities: [
+                    { time: 'Mañana', name: 'Desayuno Tradicional Michoacano', short_desc: 'Últimos sabores de Michoacán.', placeId: 'desayuno_michoacano' },
+                    { time: 'Mañana', name: 'Regreso en Autobús a Ciudad de México', short_desc: 'Viaje de vuelta a la capital para la conexión aérea.', placeId: 'bus_patzcuaro_cdmx' },
+                    { time: 'Tarde', name: 'Vuelo de Ciudad de México a Mérida', short_desc: 'Traslado al aeropuerto y vuelo al sureste.', placeId: 'vuelo_cdmx_merida' },
+                    { time: 'Noche', name: 'Llegada a Mérida y Cena Ligera', short_desc: 'Recepción en Mérida y cena de descanso.', placeId: 'cena_ligera_merida' },
+                ],
+            },
+            {
+                date: 'Domingo, 3 de noviembre',
+                day_id: 'day11',
+                activities: [
+                    { time: 'Mañana', name: 'Recorrido por la Plaza Grande y el Centro Histórico de Mérida', short_desc: 'Corazón de la ciudad blanca.', placeId: 'plaza_grande_merida' },
+                    { time: 'Mañana', name: 'Visita a la Catedral de San Ildefonso (Mérida)', short_desc: 'La catedral más antigua del continente.', placeId: 'catedral_merida' },
+                    { time: 'Mañana', name: 'Visita al Palacio de Gobierno (Mérida) y sus murales', short_desc: 'Historia yucateca a través del arte.', placeId: 'palacio_gobierno_merida' },
+                    { time: 'Tarde', name: 'Paseo por el elegante Paseo de Montejo', short_desc: 'Admira las majestuosas casonas.', placeId: 'paseo_montejo' },
+                    { time: 'Noche', name: 'Cena de Cochinita Pibil o Lechón en Lonchería Tradicional', short_desc: 'Sabores icónicos de Yucatán.', placeId: 'loncheria_merida' },
+                ],
+            },
+            {
+                date: 'Lunes, 4 de noviembre',
+                day_id: 'day12',
+                activities: [
+                    { time: 'Día Completo', name: 'Excursión a la Ruta Puuc: Zona Arqueológica de Uxmal', short_desc: 'Impresionante sitio maya con estilo arquitectónico único.', placeId: 'uxmal' },
+                    { time: 'Día Completo (Opcional)', name: 'Considerar también la Zona Arqueológica de Kabah', short_desc: 'Complemento a Uxmal en la Ruta Puuc.', placeId: 'kabah' },
+                    { time: 'Noche', name: 'Cena en los Barrios de Santiago o Santa Lucía (Mérida)', short_desc: 'Disfruta del ambiente local y la gastronomía.', placeId: 'restaurante_santiago_santa_lucia' },
+                ],
+            },
+            {
+                date: 'Martes, 5 de noviembre',
+                day_id: 'day13',
+                activities: [
+                    { time: 'Día Completo', name: 'Excursión a la Zona Arqueológica de Chichén Itzá', short_desc: 'Una de las Nuevas Maravillas del Mundo.', placeId: 'chichen_itza' },
+                    { time: 'Tarde', name: 'Refrescarse en un Cenote cercano (Ik Kil o Xkeken)', short_desc: 'Experiencia única en pozos de agua cristalina.', placeId: 'cenote_ik_kil' },
+                    { time: 'Noche', name: 'Cena en Mérida', short_desc: 'Cena relajada después de un día de exploración.', placeId: 'loncheria_merida' },
+                ],
+            },
+            {
+                date: 'Miércoles, 6 de noviembre',
+                day_id: 'day14',
+                activities: [
+                    { time: 'Día Completo (Opción 1)', name: 'Viaje a Progreso para un día de playa y mar', short_desc: 'Relajo en la costa y mariscos frescos.', placeId: 'progreso_playa' },
+                    { time: 'Día Completo (Opción 2)', name: 'Visita a Izamal (Pueblo Mágico Amarillo) o Ruta de Conventos', short_desc: 'Joya visual y cultural que combina herencia maya y colonial.', placeId: 'izamal_pueblo_magico' },
+                    { time: 'Noche', name: 'Cena de Despedida en Mérida (con Trova Yucateca)', short_desc: 'Una noche musical para cerrar el viaje.', placeId: 'cena_despedida_merida' },
+                ],
+            },
+            {
+                date: 'Jueves, 7 de noviembre',
+                day_id: 'day15',
+                activities: [
+                    { time: 'Mañana', name: 'Desayuno Final en Mérida y últimas compras', short_desc: 'Disfrutar y comprar souvenirs.', placeId: 'desayuno_final_merida' },
+                    { time: 'Mañana/Tarde', name: 'Traslado al Aeropuerto Internacional de Mérida (MID)', short_desc: 'Preparativos para la partida.', placeId: 'mid_aeropuerto' },
+                    { time: 'Tarde', name: 'Despedida de la familia', short_desc: 'La familia regresa a Colombia, tú regresas a Monterrey.', placeId: null },
+                ],
+            },
+        ];
+
+        // Consejos de viaje
+        const travelTips = [
+            {
+                title: 'Día de Muertos en Pátzcuaro: Prepárense para la Experiencia.',
+                points: [
+                    'Reserva el alojamiento en Pátzcuaro con extrema anticipación (¡ya mismo si es posible!), ya que los precios se disparan y la disponibilidad es mínima para esas fechas. Considera hospedarte en un pueblo cercano si Pátzcuaro está lleno.',
+                    'Habrá mucha gente. Sean pacientes con los tiempos de traslado, especialmente para ir a Janitzio o Tzintzuntzan. Los taxis colectivos y las combis son comunes.',
+                    'Lleven ropa cómoda y abrigadora para la noche en Pátzcuaro y en el lago, las temperaturas bajan considerablemente.',
+                    'Sean muy respetuosos en los panteones. Recuerden que es una ceremonia familiar y sagrada. Pidan permiso para tomar fotos a las personas.',
+                    'Disfruten de los antojitos y la comida de temporada que encontrarán en las plazas y puestos.'
+                ]
+            },
+            {
+                title: 'Vuelos Internos: Mérida es Calurosa.',
+                points: [
+                    'Compra los boletos de avión CDMX-Mérida con suficiente anticipación para conseguir mejores precios. Aerolíneas como Volaris, Viva Aerobus o Aeroméxico operan esa ruta.',
+                    'Mérida es mucho más cálida y húmeda que la CDMX. Hidrátense constantemente, usen protector solar y ropa ligera de algodón.'
+                ]
+            },
+            {
+                title: 'Transporte en Ciudad de México:',
+                points: [
+                    'El Metro es la forma más económica y eficiente de moverse por gran parte de la CDMX. Evítenlo en horas pico si quieren ir cómodos. Compran una tarjeta de recarga.',
+                    'Uber, DiDi, y Cabify son excelentes opciones para moverse cómodamente y con tarifas claras, especialmente por la noche o para distancias más largas.',
+                    'Para el autobús a Pátzcuaro, usen líneas de primera clase como ETN, Primera Plus o ADO. Son cómodos y seguros. Reserven los asientos con anticipación.'
+                ]
+            },
+            {
+                title: 'Presupuesto Gastronómico:',
+                points: [
+                    'En CDMX, no duden en probar los tacos de puestos callejeros (busca los que tienen mucha gente, es señal de frescura y sabor). En Mérida, busquen las "loncherías" y los mercados para probar la cochinita pibil, el lechón y los panuchos a precios increíbles.',
+                    'Siempre tomen agua embotellada.'
+                ]
+            },
+            {
+                title: 'Flexibilidad y Descanso:',
+                points: [
+                    'El itinerario es intenso, especialmente los días de cambio de ciudad. Asegúrense de tener momentos de descanso. No intenten abarcar *todo* si se sienten cansados.',
+                    'Caminarán muchísimo, tanto en la CDMX como en las zonas arqueológicas. ¡Prioricen el calzado cómodo!'
+                ]
+            },
+            {
+                title: 'Seguridad:',
+                points: [
+                    'Manténganse siempre alerta, especialmente en lugares concurridos. Cuiden sus pertenencias y eviten mostrar objetos de valor ostentosamente.',
+                    'Usen taxis de sitio o apps de transporte, y eviten tomar taxis en la calle en la CDMX sin referencias.'
+                ]
+            },
+            {
+                title: 'Moneda y Pagos:',
+                points: [
+                    'La mayoría de los lugares aceptan **pesos mexicanos (MXN)**. Lleven efectivo para mercados, puestos callejeros y pequeños comercios.',
+                    'Las tarjetas de crédito son aceptadas en restaurantes y tiendas más grandes.',
+                    'Para referencia rápida, puedes usar una estimación de 1 MXN ≈ 220-225 COP (esto puede variar, revisa el tipo de cambio actualizado antes del viaje).'
+                ]
+            }
+        ];
+
+        // Función para categorizar y ordenar lugares
+        const getCategorizedAndSortedPlaces = () => {
+            const categories = {
+                'Atracciones y Sitios Turísticos': [],
+                'Sitios Arqueológicos': [],
+                'Museos y Galerías de Arte': [],
+                'Edificios Históricos y Arquitectura': [],
+                'Templo Religioso': [],
+                'Barrios y Zonas Culturales': [],
+                'Pueblos Mágicos': [],
+                'Restaurantes y Gastronomía': [],
+                'Mercados y Compras': [],
+                'Transporte': [],
+                'Playas y Naturaleza': [],
+                'Cenotes': [],
+                'Otros Eventos / Actividades': []
+            };
+
+            placesData.forEach(place => {
+                const type = place.type;
+                switch (type) {
+                    case 'Zona Arqueológica':
+                    case 'Zona Arqueológica Maya':
+                        categories['Sitios Arqueológicos'].push(place);
+                        break;
+                    case 'Museo de Historia y Arte Precolombino':
+                    case 'Casa-Museo de Artista':
+                    case 'Museo Histórico / Edificio Histórico':
+                    case 'Museo de Arte / Arquitectura':
+                        categories['Museos y Galerías de Arte'].push(place);
+                        break;
+                    case 'Edificio Histórico / Gubernamental':
+                    case 'Edificio Histórico / Arquitectónico':
+                    case 'Edificio Gubernamental / Histórico':
+                        categories['Edificios Históricos y Arquitectura'].push(place);
+                        break;
+                    case 'Templo Religioso / Histórico-Arquitectónico':
+                    case 'Santuario Religioso':
+                        categories['Templo Religioso'].push(place);
+                        break;
+                    case 'Barrio Histórico / Cultural':
+                    case 'Plaza Principal / Centro Cívico':
+                    case 'Avenida Histórica / Arquitectónica':
+                    case 'Isla / Pueblo Indígena / Atracción Cultural':
+                        categories['Barrios y Zonas Culturales'].push(place);
+                        break;
+                    case 'Pueblo Mágico / Centro Histórico':
+                    case 'Pueblo Mágico / Sitio Histórico':
+                        categories['Pueblos Mágicos'].push(place);
+                        break;
+                    case 'Restaurante':
+                    case 'Restaurante (Económico)':
+                    case 'Restaurante (Económico / Local)':
+                    case 'Restaurante / Experiencia Cultural':
+                    case 'Gastronomía (Antojito)':
+                    case 'Gastronomía (Comida Callejera / Antojitos)':
+                        categories['Restaurantes y Gastronomía'].push(place);
+                        break;
+                    case 'Mercado de Artesanías':
+                    case 'Mercado de Arte y Artesanías':
+                    case 'Actividad / Compras':
+                        categories['Mercados y Compras'].push(place);
+                        break;
+                    case 'Transporte':
+                    case 'Transporte Aéreo':
+                        categories['Transporte'].push(place);
+                        break;
+                    case 'Playa / Destino Costero':
+                        categories['Playas y Naturaleza'].push(place);
+                        break;
+                    case 'Cenote (Pozo Natural de Agua Dulce)':
+                        categories['Cenotes'].push(place);
+                        break;
+                    default:
+                        // Si no encaja en ninguna categoría específica, va a "Atracciones..."
+                        if (place.id === 'churros_esquites_coyoacan' || place.id === 'desayuno_final_merida' || place.id === 'desayuno_michoacano' || place.id === 'cena_ligera_merida' || place.id === 'cena_despedida_cdmx' || place.id === 'cena_despedida_merida' || place.id === 'compras_centro_historico' || place.id === 'progreso_playa') {
+                            categories['Atracciones y Sitios Turísticos'].push(place);
+                        } else {
+                            categories['Otros Eventos / Actividades'].push(place);
+                        }
+                        break;
+                }
+            });
+
+            // Ordenar alfabéticamente dentro de cada categoría
+            for (const category in categories) {
+                categories[category].sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            // Filtrar categorías vacías para no mostrarlas
+            return Object.keys(categories).reduce((acc, key) => {
+                if (categories[key].length > 0) {
+                    acc[key] = categories[key];
+                }
+                return acc;
+            }, {});
+        };
+
+        // Componente para la vista detallada (modal, usado por Cronograma)
+        const DetailedViewModal = ({ place, onClose }) => {
+            if (!place) return null;
+
+            React.useEffect(() => {
+                // Evita el scroll del cuerpo cuando el modal está abierto
+                document.body.style.overflow = 'hidden';
+                return () => {
+                    document.body.style.overflow = 'unset';
+                };
+            }, []);
+
+            const handleGoogleMapsClick = () => {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map_query || place.name)}`, '_blank');
+            };
+
+            return (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-auto font-sans">
+                    <div className="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 hover:scale-100">
+                        <div className="flex justify-between items-start mb-4">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{place.name}</h2>
+                            <button
+                                onClick={onClose}
+                                className="text-gray-500 hover:text-gray-700 text-3xl font-light leading-none transition-transform transform hover:rotate-90"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <img
+                            src={place.image}
+                            alt={`Imagen del lugar: ${place.name}`}
+                            className="w-full h-64 object-cover rounded-lg mb-6 shadow-md"
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/ADACB4/1D1F23?text=IMAGEN_NO_DISPONIBLE"; }}
+                        />
+
+                        <div className="text-gray-700 text-base sm:text-lg space-y-4">
+                            <p><strong>Tipo:</strong> {place.type}</p>
+                            {place.address && <p><strong>Dirección:</strong> {place.address}</p>}
+                            <p className="leading-relaxed">{place.description}</p>
+                            <p>
+                                <strong>Estimado de Precio:</strong> {place.price_mxn} MXN / {place.price_cop} COP
+                            </p>
+                            <p><strong>Por Qué es Importante Visitarlo:</strong> {place.importance}</p>
+
+                            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                                {place.map_query && (
+                                    <button
+                                        onClick={handleGoogleMapsClick}
+                                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"></path>
+                                        </svg>
+                                        Ver en Google Maps
+                                    </button>
+                                )}
+                                <button
+                                    onClick={onClose}
+                                    className="flex items-center justify-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente para la página de detalles de un lugar (usado por Índice y Mapa)
+        const PlaceDetailPage = ({ place, onBack }) => {
+            if (!place) return null;
+
+            const handleGoogleMapsClick = () => {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map_query || place.name)}`, '_blank');
+            };
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center text-red-700 hover:text-red-900 font-semibold mb-6 text-base sm:text-lg transition-colors duration-200"
+                    >
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Volver
+                    </button>
+
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">{place.name}</h1>
+
+                    <img
+                        src={place.image}
+                        alt={`Imagen del lugar: ${place.name}`}
+                        className="w-full h-72 object-cover rounded-lg mb-6 shadow-md"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/ADACB4/1D1F23?text=IMAGEN_NO_DISPONIBLE"; }}
+                    />
+
+                    <div className="text-gray-700 text-base sm:text-lg space-y-4">
+                        <p><strong>Tipo:</strong> {place.type}</p>
+                        {place.address && <p><strong>Dirección:</strong> {place.address}</p>}
+                        <p className="leading-relaxed">{place.description}</p>
+                        <p>
+                            <strong>Estimado de Precio:</strong> {place.price_mxn} MXN / {place.price_cop} COP
+                        </p>
+                        <p><strong>Por Qué es Importante Visitarlo:</strong> {place.importance}</p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                            {place.map_query && (
+                                <button
+                                    onClick={handleGoogleMapsClick}
+                                    className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"></path>
+                                    </svg>
+                                    Ver en Google Maps
+                                </button>
+                            )}
+                            <button
+                                onClick={onBack}
+                                className="flex items-center justify-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                            >
+                                Volver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente para la página de detalles de un restaurante recomendado
+        const RestaurantDetailsPage = ({ restaurant, onBack }) => {
+            if (!restaurant) return null;
+
+            const handleGoogleMapsClick = () => {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.map_query || restaurant.name)}`, '_blank');
+            };
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center text-red-700 hover:text-red-900 font-semibold mb-6 text-base sm:text-lg transition-colors duration-200"
+                    >
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Volver al Índice
+                    </button>
+
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">{restaurant.name}</h1>
+
+                    <img
+                        src={restaurant.image}
+                        alt={`Imagen del restaurante: ${restaurant.name}`}
+                        className="w-full h-72 object-cover rounded-lg mb-6 shadow-md"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400/ADACB4/1D1F23?text=IMAGEN_RESTAURANTE_NO_DISPONIBLE"; }}
+                    />
+
+                    <div className="text-gray-700 text-base sm:text-lg space-y-4">
+                        {restaurant.address && <p><strong>Dirección:</strong> {restaurant.address}</p>}
+                        <p className="leading-relaxed">{restaurant.description}</p>
+                        {restaurant.price_mxn && restaurant.price_cop && (
+                            <p>
+                                <strong>Estimado de Precio por Persona:</strong> ${restaurant.price_mxn.toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN / ${restaurant.price_cop.toLocaleString('es-CO', { minimumFractionDigits: 0 })} COP
+                            </p>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                            {restaurant.map_query && (
+                                <button
+                                    onClick={handleGoogleMapsClick}
+                                    className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"></path>
+                                    </svg>
+                                    Ver en Google Maps
+                                </button>
+                            )}
+                            <button
+                                onClick={onBack}
+                                className="flex items-center justify-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 sm:py-3 sm:px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                            >
+                                Volver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente individual para actividades colapsables en Cronograma
+        const CollapsibleItem = ({ activity, onOpenDetails, isExpanded, onToggleExpand }) => {
+            const place = activity.placeId ? placesData.find(p => p.id === activity.placeId) : null;
+            const shortDesc = activity.short_desc || (place ? place.description.substring(0, 100) + '...' : 'Más detalles...');
+
+            return (
+                <div className="mb-2 bg-gradient-to-r from-red-50 to-orange-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <button
+                        className="w-full flex items-center justify-between p-4 text-left text-orange-800 font-semibold text-lg focus:outline-none"
+                        onClick={onToggleExpand}
+                    >
+                        <span className="flex items-center">
+                            <span className="mr-3 text-2xl transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                &#9654;
+                            </span>
+                            {activity.time && <span className="font-bold text-gray-700 text-base md:text-lg mr-2">{activity.time}:</span>}
+                            <span className="flex-1 text-orange-900 text-base sm:text-lg">{activity.name}</span>
+                        </span>
+                    </button>
+                    {isExpanded && (
+                        <div className="px-6 pb-4 pt-2 text-gray-700 text-sm sm:text-base">
+                            <p className="mb-3">{shortDesc}</p>
+                            {place && (
+                                <button
+                                    onClick={() => onOpenDetails(place.id)} // Llama al modal de detalles para cronograma
+                                    className="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white font-medium py-1 px-2 sm:py-2 sm:px-4 rounded-full shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75"
+                                >
+                                    Ver Detalles
+                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                    </svg>
+                                </button>
+                            )}
+                            {!place && (
+                                <p className="text-sm text-gray-500 italic">No hay detalles específicos adicionales para esta actividad.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Componente de la pestaña Cronograma
+        const CronogramaTab = ({ onOpenDetails }) => {
+            const [expandedDays, setExpandedDays] = React.useState({});
+            const [expandedActivities, setExpandedActivities] = React.useState({});
+
+            const toggleDayExpand = (dayId) => {
+                setExpandedDays(prev => ({ ...prev, [dayId]: !prev[dayId] }));
+            };
+
+            const toggleActivityExpand = (activityIndex) => {
+                setExpandedActivities(prev => ({ ...prev, [activityIndex]: !prev[activityIndex] }));
+            };
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">Cronograma del Viaje Familiar</h1>
+                    <p className="text-center text-base sm:text-lg text-gray-600 mb-8">
+                        Explora nuestro plan día a día. Haz clic en cada evento para expandir detalles y en "Ver Detalles" para información completa.
+                    </p>
+                    {itineraryData.map((day, dayIndex) => {
+                        let dailyCostMXN = 0;
+                        let dailyCostCOP = 0;
+
+                        day.activities.forEach(activity => {
+                            const place = placesData.find(p => p.id === activity.placeId);
+                            if (place && typeof place.price_mxn === 'number' && place.type !== 'Transporte' && place.type !== 'Transporte Aéreo') {
+                                dailyCostMXN += place.price_mxn;
+                                dailyCostCOP += place.price_cop;
+                            }
+                        });
+
+                        return (
+                            <div key={day.day_id} className="mb-8 p-4 bg-red-50 rounded-lg shadow-md border-l-4 border-red-600">
+                                <button
+                                    className="w-full text-left py-3 px-2 flex justify-between items-center bg-red-200 hover:bg-red-300 rounded-md focus:outline-none transition duration-200"
+                                    onClick={() => toggleDayExpand(day.day_id)}
+                                >
+                                    <h2 className="text-xl sm:text-2xl font-bold text-red-900">
+                                        <span className="mr-2 text-3xl font-light transition-transform duration-200" style={{ transform: expandedDays[day.day_id] ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                                        {day.date}
+                                    </h2>
+                                </button>
+                                {expandedDays[day.day_id] && (
+                                    <div className="mt-4 border-t pt-4 border-red-300">
+                                        {day.activities.map((activity, activityIndex) => (
+                                            <CollapsibleItem
+                                                key={`${day.day_id}-${activityIndex}`}
+                                                activity={activity}
+                                                onOpenDetails={onOpenDetails} // Pasa openPlaceModal para los detalles de cronograma
+                                                isExpanded={expandedActivities[`${day.day_id}-${activityIndex}`]}
+                                                onToggleExpand={() => toggleActivityExpand(`${day.day_id}-${activityIndex}`)}
+                                            />
+                                        ))}
+                                        <div className="mt-4 p-3 bg-red-100 rounded-lg text-red-800 font-bold text-base sm:text-lg text-right">
+                                            Estimado Total del Día: ${dailyCostMXN.toLocaleString('es-MX')} MXN / ${dailyCostCOP.toLocaleString('es-CO')} COP (por persona, actividades y comidas)
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        };
+
+        // Componente de la pestaña Índice
+        const IndexTab = ({ onOpenDetails, openRestaurantDetailsPage }) => {
+            const categorizedPlaces = getCategorizedAndSortedPlaces();
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">Índice de Lugares y Eventos</h1>
+                    <p className="text-center text-base sm:text-lg text-gray-600 mb-8">
+                        Explora todos los puntos de interés y actividades, organizados por tipo y orden alfabético.
+                    </p>
+
+                    {Object.keys(categorizedPlaces).map(category => (
+                        <div key={category} className="mb-8 p-4 bg-red-50 rounded-lg shadow-md border-l-4 border-red-600">
+                            <h2 className="text-xl sm:text-2xl font-bold text-red-900 mb-4 pb-2 border-b border-red-300">{category}</h2>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {categorizedPlaces[category].map(place => (
+                                    <li key={place.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-red-200">
+                                        <button
+                                            onClick={() => onOpenDetails(place)} // Ahora pasa el objeto place completo para abrir PlaceDetailPage
+                                            className="w-full text-left p-4 flex items-center justify-between text-base sm:text-lg text-red-800 hover:text-red-900 font-semibold focus:outline-none"
+                                        >
+                                            <span className="flex-1">{place.name}</span>
+                                            <svg className="w-5 h-5 ml-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </button>
+                                        {place.recommended_restaurants && place.recommended_restaurants.length > 0 && (
+                                            <div className="p-4 pt-0 border-t border-red-100 mt-2">
+                                                <h4 className="text-sm sm:text-md font-bold text-red-700 mb-2">Restaurantes Recomendados:</h4>
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {place.recommended_restaurants.map(rec_rest => (
+                                                        <button
+                                                            key={rec_rest.rec_id}
+                                                            onClick={() => openRestaurantDetailsPage(rec_rest)} // Abre RestaurantDetailsPage
+                                                            className="w-full text-left py-2 px-3 bg-red-100 hover:bg-red-200 rounded-md text-red-800 text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm"
+                                                        >
+                                                            {rec_rest.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        // Componente de la pestaña Mapa
+        const MapTab = ({ onOpenDetails }) => { // onOpenDetails es ahora openPlaceDetailPage
+            const mapContainerRef = React.useRef(null);
+            const mapInstanceRef = React.useRef(null);
+            const markerLayerRef = React.useRef(null);
+            const [activeDays, setActiveDays] = React.useState(itineraryData.map(day => day.day_id));
+
+            // Prepara los puntos para el mapa
+            const mapPoints = itineraryData.flatMap((day, dayIndex) => {
+                const activitiesWithPlaces = day.activities.filter(activity => {
+                    const place = placesData.find(p => p.id === activity.placeId);
+                    return place && typeof place.lat === 'number' && typeof place.lng === 'number';
+                });
+
+                return activitiesWithPlaces.map((activity, activityOrderWithinDay) => {
+                    const place = placesData.find(p => p.id === activity.placeId);
+                    return {
+                        id: activity.placeId,
+                        dayId: day.day_id,
+                        dayNumber: dayIndex + 1,
+                        activityOrder: activityOrderWithinDay + 1,
+                        lat: place.lat,
+                        lng: place.lng,
+                        name: place.name,
+                        type: place.type,
+                        color: `hsl(${dayIndex * (360 / itineraryData.length)}, 70%, 50%)`, // Color único por día
+                    };
+                });
+            });
+
+            // Calcula el centro inicial del mapa
+            const getMapCenter = () => {
+                const validPoints = mapPoints.filter(p => p.lat && p.lng);
+                if (validPoints.length === 0) return [23.6345, -102.5528]; // Centro de México si no hay puntos
+
+                const avgLat = validPoints.reduce((sum, p) => sum + p.lat, 0) / validPoints.length;
+                const avgLng = validPoints.reduce((sum, p) => sum + p.lng, 0) / validPoints.length;
+                return [avgLat, avgLng];
+            };
+
+            const initialMapCenter = getMapCenter();
+
+            // Carga Leaflet y inicializa el mapa
+            React.useEffect(() => {
+                if (!mapContainerRef.current) {
+                    return;
+                }
+
+                // Limpia el mapa existente si lo hay
+                if (mapInstanceRef.current) {
+                    mapInstanceRef.current.remove();
+                    mapInstanceRef.current = null;
+                }
+
+                // Leaflet JS CDN script
+                const leafletScriptUrl = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js';
+
+                // Función para cargar el script de Leaflet
+                const loadLeafletScript = () => {
+                    if (window.L && mapContainerRef.current) {
+                        initializeMap();
+                        return;
+                    }
+                    // Si el script ya existe o está en proceso de carga, no lo añadas de nuevo
+                    if (document.querySelector(`script[src="${leafletScriptUrl}"]`)) {
+                        // Espera a que el script cargue
+                        document.querySelector(`script[src="${leafletScriptUrl}"]`).onload = initializeMap;
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.src = leafletScriptUrl;
+                    script.integrity = 'sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==';
+                    script.crossOrigin = '';
+                    script.onload = initializeMap;
+                    document.body.appendChild(script);
+                };
+
+                // Inicializa el mapa cuando Leaflet esté disponible
+                const initializeMap = () => {
+                    if (mapContainerRef.current && window.L && !mapInstanceRef.current) {
+                        mapInstanceRef.current = window.L.map(mapContainerRef.current).setView(initialMapCenter, 5);
+
+                        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(mapInstanceRef.current);
+
+                        markerLayerRef.current = window.L.layerGroup().addTo(mapInstanceRef.current);
+
+                        updateMarkers();
+                    } else if (mapInstanceRef.current) {
+                        updateMarkers(); // Si el mapa ya existe, solo actualiza los marcadores
+                    }
+                };
+
+                loadLeafletScript(); // Carga y maneja el script de Leaflet
+
+                // Función de limpieza para eliminar el mapa al desmontar el componente
+                return () => {
+                    if (mapInstanceRef.current) {
+                        mapInstanceRef.current.remove();
+                        mapInstanceRef.current = null;
+                    }
+                    // No remover el script de Leaflet de document.body porque podría ser usado por otros componentes
+                };
+            }, []); // Se ejecuta solo una vez al montar
+
+            // Expone la función de navegación de detalles de lugar para los popups de Leaflet
+            // Esto permite que el HTML simple del popup llame una función React
+            React.useEffect(() => {
+                window.openPlaceDetailPageFromMap = (placeId) => {
+                    const place = placesData.find(p => p.id === placeId);
+                    if (place) {
+                        onOpenDetails(place); // Llama a la función openPlaceDetailPage que se pasó como prop
+                    }
+                };
+                return () => {
+                    delete window.openPlaceDetailPageFromMap;
+                };
+            }, [onOpenDetails]); // Dependencia para asegurar que openPlaceDetailPageFromMap se actualice si onOpenDetails cambia
+
+
+            // Actualiza los marcadores cuando los días activos cambian o los puntos del mapa se recalculan
+            React.useEffect(() => {
+                updateMarkers();
+            }, [activeDays, mapPoints]); // Dependencias para re-renderizar marcadores
+
+            // Función para actualizar los marcadores en el mapa
+            const updateMarkers = () => {
+                if (!mapInstanceRef.current || !markerLayerRef.current || !window.L) return;
+
+                markerLayerRef.current.clearLayers(); // Limpia marcadores existentes
+
+                // Crea un ícono personalizado con color y número
+                const createColoredMarkerIcon = (color, number) => {
+                    return window.L.divIcon({
+                        className: 'custom-colored-marker',
+                        html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">${number}</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15],
+                        popupAnchor: [0, -15]
+                    });
+                };
+
+                mapPoints.forEach(point => {
+                    if (activeDays.includes(point.dayId)) { // Solo muestra marcadores para días activos
+                        const markerIcon = createColoredMarkerIcon(point.color, point.activityOrder);
+                        const marker = window.L.marker([point.lat, point.lng], { icon: markerIcon }).addTo(markerLayerRef.current);
+                        const place = placesData.find(p => p.id === point.id);
+                        const googleMapsLink = place && place.map_query
+                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.map_query || place.name)}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point.name)}`;
+
+                        // Contenido del popup del marcador
+                        const popupContent = `
+                            <div style="font-family: 'Montserrat', sans-serif; text-align: center; padding: 10px;">
+                                <strong style="color: #6A1B9A; font-size: 1.1em;">${point.name}</strong>
+                                <p style="margin-top: 5px; color: #424242;">${point.type}</p>
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                    <button
+                                        onclick="window.openPlaceDetailPageFromMap('${point.id}')"
+                                        style="
+                                            background-color: #D32F2F; /* Rojo para "Ver Detalles" */
+                                            color: white;
+                                            padding: 8px 12px;
+                                            border: none;
+                                            border-radius: 9999px;
+                                            cursor: pointer;
+                                            font-size: 0.9em;
+                                            font-weight: 600;
+                                            transition: background-color 0.2s ease, transform 0.2s ease;
+                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                                        "
+                                        onmouseover="this.style.backgroundColor='#C62828'; this.style.transform='scale(1.05)';"
+                                        onmouseout="this.style.backgroundColor='#D32F2F'; this.style.transform='scale(1.0)';"
+                                    >
+                                        Ver Detalles
+                                    </button>
+                                    <button
+                                        onclick="window.open('${googleMapsLink}', '_blank')"
+                                        style="
+                                            background-color: #4285F4; /* Azul de Google */
+                                            color: white;
+                                            padding: 8px 12px;
+                                            border: none;
+                                            border-radius: 9999px;
+                                            cursor: pointer;
+                                            font-size: 0.9em;
+                                            font-weight: 600;
+                                            transition: background-color 0.2s ease, transform 0.2s ease;
+                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                                            margin-top: 5px;
+                                        "
+                                        onmouseover="this.style.backgroundColor='#357AE8'; this.style.transform='scale(1.05)';"
+                                        onmouseout="this.style.backgroundColor='#4285F4'; this.style.transform='scale(1.0)';"
+                                    >
+                                        Ver en Google Maps
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        marker.bindPopup(popupContent);
+                    }
+                });
+            };
+
+            // Funciones para controlar la visibilidad de los días
+            const toggleDayVisibility = (dayId) => {
+                setActiveDays(prev =>
+                    prev.includes(dayId) ? prev.filter(id => id !== dayId) : [...prev, dayId]
+                );
+            };
+
+            const handleSelectAll = () => {
+                setActiveDays(itineraryData.map(day => day.day_id));
+            };
+
+            const handleDeselectAll = () => {
+                setActiveDays([]);
+            };
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">Mapa Interactivo del Viaje</h1>
+                    <p className="text-center text-base sm:text-lg text-gray-600 mb-8">
+                        Explora los puntos clave del viaje. Haz clic en los botones de días para filtrar los marcadores. Haz clic en un marcador para ver más información.
+                    </p>
+
+                    <div className="mb-4 flex flex-wrap justify-center gap-2">
+                        <button
+                            onClick={handleSelectAll}
+                            className="py-2 px-4 rounded-full text-sm font-medium bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-all duration-200"
+                        >
+                            Marcar Todos
+                        </button>
+                        <button
+                            onClick={handleDeselectAll}
+                            className="py-2 px-4 rounded-full text-sm font-medium bg-red-600 text-white shadow-md hover:bg-red-700 transition-all duration-200"
+                        >
+                            Desmarcar Todos
+                        </button>
+                    </div>
+
+                    <div className="mb-6 flex flex-wrap justify-center gap-2">
+                        {itineraryData.map((day, index) => {
+                            const dayColor = mapPoints.find(point => point.dayId === day.day_id)?.color || 'gray';
+                            const isDayActive = activeDays.includes(day.day_id);
+
+                            return (
+                                <button
+                                    key={day.day_id}
+                                    onClick={() => toggleDayVisibility(day.day_id)}
+                                    className={`py-2 px-4 rounded-full text-sm font-medium transition-all duration-200`}
+                                    style={{
+                                        backgroundColor: isDayActive ? dayColor : 'rgb(229 231 235)',
+                                        color: isDayActive ? 'white' : 'rgb(55 65 81)',
+                                        boxShadow: isDayActive ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                                        '--tw-shadow': isDayActive ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none',
+                                        '--tw-shadow-colored': isDayActive ? '0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -1px var(--tw-shadow-color)' : 'none',
+                                        filter: isDayActive ? 'brightness(1)' : 'brightness(1)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (isDayActive) {
+                                            e.currentTarget.style.backgroundColor = `color-mix(in srgb, ${dayColor} 90%, black)`;
+                                        } else {
+                                            e.currentTarget.style.backgroundColor = 'rgb(209 213 219)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (isDayActive) {
+                                            e.currentTarget.style.backgroundColor = dayColor;
+                                        } else {
+                                            e.currentTarget.style.backgroundColor = 'rgb(229 231 235)';
+                                        }
+                                    }}
+                                >
+                                    Día {index + 1}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div id="mapid" ref={mapContainerRef} className="w-full h-[500px] rounded-xl shadow-lg border-2 border-gray-200">
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente de la pestaña Presupuesto y Consejos
+        const BudgetTipsTab = () => {
+            const familyMembers = 4; // Número fijo de miembros de la familia
+
+            let totalTripCostMXN = 0;
+            let totalTripCostCOP = 0;
+
+            // Calcular costos de actividades y comidas
+            itineraryData.forEach(day => {
+                day.activities.forEach(activity => {
+                    const place = placesData.find(p => p.id === activity.placeId);
+                    if (place && typeof place.price_mxn === 'number' && place.type !== 'Transporte' && place.type !== 'Transporte Aéreo') {
+                        totalTripCostMXN += place.price_mxn;
+                        totalTripCostCOP += place.price_cop;
+                    }
+                });
+            });
+
+            // Calcular costos de transporte interurbano (autobuses y vuelos)
+            const transportPlaces = placesData.filter(p => p.type === 'Transporte' || p.type === 'Transporte Aéreo');
+            transportPlaces.forEach(transport => {
+                if (typeof transport.price_mxn === 'number' && typeof transport.price_cop === 'number') {
+                    totalTripCostMXN += transport.price_mxn;
+                    totalTripCostCOP += transport.price_cop;
+                }
+            });
+
+            const totalTripCostPerPersonMXN = totalTripCostMXN;
+            const totalTripCostPerPersonCOP = totalTripCostCOP;
+            const totalTripCostFamilyMXN = totalTripCostMXN * familyMembers;
+            const totalTripCostFamilyCOP = totalTripCostCOP * familyMembers;
+
+
+            return (
+                <div className="p-4 md:p-6 bg-white rounded-xl shadow-inner min-h-[70vh] font-sans">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-red-800 mb-6 text-center">Presupuesto y Consejos Finales</h1>
+                    <p className="text-center text-base sm:text-lg text-gray-600 mb-8">
+                        Planifica tu presupuesto y revisa los consejos clave para asegurar un viaje sin preocupaciones.
+                    </p>
+
+                    <div className="mb-8 p-4 bg-yellow-50 rounded-lg shadow-md border-l-4 border-yellow-600">
+                        <h2 className="text-xl sm:text-2xl font-bold text-yellow-900 mb-4 pb-2 border-b border-yellow-300">Estimado de Presupuesto</h2>
+                        <div className="text-gray-700 text-base sm:text-lg space-y-3">
+                            <p>Este presupuesto considera el costo de **entradas a atracciones, museos y comidas** por persona, y los **costos de transporte interurbano (autobuses y vuelos)** por persona. No incluye alojamiento ni transporte local dentro de las ciudades (ej. taxis, Uber).</p>
+                            <p className="text-lg sm:text-xl font-bold text-green-700">
+                                Costo Estimado del Viaje por Persona: <br/>
+                                ${totalTripCostPerPersonMXN.toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN / ${totalTripCostPerPersonCOP.toLocaleString('es-CO', { minimumFractionDigits: 0 })} COP
+                            </p>
+                            <p className="text-lg sm:text-xl font-bold text-green-800">
+                                Costo Estimado Total para la Familia (4 personas): <br/>
+                                ${totalTripCostFamilyMXN.toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN / ${totalTripCostFamilyCOP.toLocaleString('es-CO', { minimumFractionDigits: 0 })} COP
+                            </p>
+                            <p className="text-sm italic text-gray-500">
+                                *Nota: Los precios son estimados y pueden variar. Se recomienda llevar efectivo para gastos pequeños y para lugares donde no se aceptan tarjetas. El tipo de cambio usado es referencial (1 MXN ≈ 220-225 COP).*
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {travelTips.map((tip, index) => (
+                            <div key={index} className="bg-red-50 rounded-xl shadow-md p-5 border-l-4 border-red-600 hover:shadow-lg transition-all duration-200">
+                                <h3 className="text-lg sm:text-xl font-bold text-red-900 mb-3">{tip.title}</h3>
+                                <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                                    {tip.points.map((point, pointIndex) => (
+                                        <li key={pointIndex} className="text-base leading-relaxed">{point}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente principal de la aplicación
+        const App = () => {
+            const [activeTab, setActiveTab] = React.useState('cronograma'); // Pestaña activa
+            const [selectedPlaceIdForModal, setSelectedPlaceIdForModal] = React.useState(null); // Para modales de Cronograma
+            const [isModalOpen, setIsModalOpen] = React.useState(false); // Controla la visibilidad del modal
+            const [selectedPlaceForPage, setSelectedPlaceForPage] = React.useState(null); // Para páginas de Índice/Mapa
+            const [selectedRestaurantForPage, setSelectedRestaurantForPage] = React.useState(null); // Para página de restaurantes recomendados
+
+            // Función para abrir el modal (usado por Cronograma)
+            const openPlaceModal = (placeId) => {
+                setSelectedPlaceIdForModal(placeId);
+                setIsModalOpen(true);
+            };
+
+            // Función para cerrar el modal
+            const closePlaceModal = () => {
+                setIsModalOpen(false);
+                setSelectedPlaceIdForModal(null);
+            };
+
+            // Función para abrir una página de detalles de lugar (usado por Índice y Mapa)
+            const openPlaceDetailPage = (place) => {
+                setSelectedPlaceForPage(place);
+                setSelectedRestaurantForPage(null); // Asegura que la página de restaurante esté cerrada
+            };
+
+            // Función para cerrar la página de detalles de lugar
+            const closePlaceDetailPage = () => {
+                setSelectedPlaceForPage(null);
+            };
+
+            // Función para abrir la página de detalles de restaurante (usado por Índice)
+            const openRestaurantDetailsPage = (restaurant) => {
+                setSelectedRestaurantForPage(restaurant);
+                setSelectedPlaceForPage(null); // Asegura que la página de lugar esté cerrada
+            };
+
+            // Función para cerrar la página de detalles de restaurante
+            const closeRestaurantDetailsPage = () => {
+                setSelectedRestaurantForPage(null);
+            };
+
+            // Obtiene el lugar para el modal si está abierto
+            const placeInModal = selectedPlaceIdForModal ? placesData.find(p => p.id === selectedPlaceIdForModal) : null;
+
+            return (
+                <div className="min-h-screen p-4 sm:p-6 font-sans antialiased"
+                    style={{
+                        background: 'linear-gradient(to bottom right, #fdf2f8, #fefce8)', /* Un gradiente suave */
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundAttachment: 'fixed',
+                        backgroundPosition: 'center'
+                    }}>
+                    {/* Contenedor principal de la aplicación */}
+                    <div className="max-w-6xl mx-auto bg-white bg-opacity-85 rounded-2xl shadow-xl overflow-hidden mb-8 transform transition-all duration-300 scale-98 hover:scale-100">
+                        {/* Encabezado de la aplicación */}
+                        <header className="bg-gradient-to-r from-purple-800 via-red-700 to-orange-500 text-white p-6 md:p-8 shadow-md">
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-2">
+                                VIAJE A MÉXICO 2025
+                            </h1>
+                            <p className="text-center text-xl md:text-2xl font-light opacity-90">
+                                ¡Una aventura Inolvidable!
+                            </p>
+                            <p className="text-center text-lg md:text-xl font-semibold opacity-90 mt-2">
+                                Familia Molina Velásquez
+                            </p>
+                        </header>
+
+                        {/* Barra de navegación condicional */}
+                        {!selectedRestaurantForPage && !selectedPlaceForPage && (
+                            <nav className="bg-purple-700 shadow-lg sticky top-0 z-40">
+                                <ul className="flex flex-wrap justify-center text-lg md:text-xl font-semibold">
+                                    <li className="flex-1">
+                                        <button
+                                            onClick={() => setActiveTab('cronograma')}
+                                            className={`w-full py-4 px-3 text-center transition-all duration-300 focus:outline-none ${
+                                                activeTab === 'cronograma'
+                                                    ? 'bg-purple-900 text-white shadow-inner border-b-4 border-yellow-300'
+                                                    : 'text-purple-100 hover:bg-purple-800 hover:text-white'
+                                            }`}
+                                        >
+                                            Cronograma
+                                        </button>
+                                    </li>
+                                    <li className="flex-1">
+                                        <button
+                                            onClick={() => setActiveTab('indice')}
+                                            className={`w-full py-4 px-3 text-center transition-all duration-300 focus:outline-none ${
+                                                activeTab === 'indice'
+                                                    ? 'bg-purple-900 text-white shadow-inner border-b-4 border-yellow-300'
+                                                    : 'text-purple-100 hover:bg-purple-800 hover:text-white'
+                                            }`}
+                                        >
+                                            Índice
+                                        </button>
+                                    </li>
+                                    <li className="flex-1">
+                                        <button
+                                            onClick={() => setActiveTab('mapa')}
+                                            className={`w-full py-4 px-3 text-center transition-all duration-300 focus:outline-none ${
+                                                activeTab === 'mapa'
+                                                    ? 'bg-purple-900 text-white shadow-inner border-b-4 border-yellow-300'
+                                                    : 'text-purple-100 hover:bg-purple-800 hover:text-white'
+                                            }`}
+                                        >
+                                            Mapa
+                                        </button>
+                                    </li>
+                                    <li className="flex-1">
+                                        <button
+                                            onClick={() => setActiveTab('presupuesto')}
+                                            className={`w-full py-4 px-3 text-center transition-all duration-300 focus:outline-none ${
+                                                activeTab === 'presupuesto'
+                                                    ? 'bg-purple-900 text-white shadow-inner border-b-4 border-yellow-300'
+                                                    : 'text-purple-100 hover:bg-purple-800 hover:text-white'
+                                            }`}
+                                        >
+                                            Presupuesto
+                                        </button>
+                                    </li>
+                                </ul>
+                            </nav>
+                        )}
+
+                        {/* Contenido principal que cambia según la pestaña o página de detalles activa */}
+                        <main className="p-4 bg-gray-50 min-h-[calc(100vh-200px)]">
+                            {selectedRestaurantForPage ? (
+                                <RestaurantDetailsPage
+                                    restaurant={selectedRestaurantForPage}
+                                    onBack={closeRestaurantDetailsPage}
+                                />
+                            ) : selectedPlaceForPage ? (
+                                <PlaceDetailPage
+                                    place={selectedPlaceForPage}
+                                    onBack={closePlaceDetailPage}
+                                />
+                            ) : (
+                                <>
+                                    {activeTab === 'cronograma' && <CronogramaTab onOpenDetails={openPlaceModal} />}
+                                    {activeTab === 'indice' && <IndexTab onOpenDetails={openPlaceDetailPage} openRestaurantDetailsPage={openRestaurantDetailsPage} />}
+                                    {activeTab === 'mapa' && <MapTab onOpenDetails={openPlaceDetailPage} />}
+                                    {activeTab === 'presupuesto' && <BudgetTipsTab />}
+                                </>
+                            )}
+                        </main>
+                    </div>
+
+                    {/* Modal de detalles (solo para el Cronograma) */}
+                    {isModalOpen && (
+                        <DetailedViewModal
+                            place={placeInModal}
+                            onClose={closePlaceModal}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // Renderiza la aplicación React en el elemento con id 'root'
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+
+    <!-- Leaflet JS (debe cargarse después del script de la aplicación React para asegurar que window.L esté disponible) -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        xintegrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+</body>
+</html>
